@@ -167,19 +167,19 @@ struct ShopItemCard: View {
         }
     }
 }
-
-#Preview("ShopView") {
-    // Provide minimal, placeholder dependencies for preview
-    let previewAnimal = Animal(
-        type: .cat,  // use an AnimalType case, not a string
-        status: .init(
-            happiness: .init(value: 100),
-            health: .init(value: 100),
-            hunger: .init(value: 100)
-        )
-    )
-    let previewShop = Shop()
-    let manager = AnimalManager(animal: previewAnimal, shop: previewShop)
-    NavigationView { ShopView(animalManager: manager) }
-}
+//
+//#Preview("ShopView") {
+//    // Provide minimal, placeholder dependencies for preview
+//    let previewAnimal = Animal(
+//        type: .cat,  // use an AnimalType case, not a string
+//        status: .init(
+//            happiness: .init(value: 100),
+//            health: .init(value: 100),
+//            hunger: .init(value: 100)
+//        )
+//    )
+//    let previewShop = Shop()
+//    let manager = AnimalManager(animal: previewAnimal, shop: previewShop)
+//    NavigationView { ShopView(animalManager: manager) }
+//}
 

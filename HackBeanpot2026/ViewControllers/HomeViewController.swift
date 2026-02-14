@@ -31,7 +31,7 @@ class HomeViewController: UIViewController {
         title = "Home"
         
         // Create and configure the SwiftUI hosting controller to fill the entire screen
-        let swiftUIHostingController = UIHostingController(rootView: TestView())
+        let swiftUIHostingController = UIHostingController(rootView: HomeView())
         addChild(swiftUIHostingController)
         swiftUIHostingController.view.translatesAutoresizingMaskIntoConstraints = false
         swiftUIHostingController.view.backgroundColor = UIColor.clear

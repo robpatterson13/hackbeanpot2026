@@ -7,14 +7,19 @@
 
 import Foundation
 
-enum DailyObjective {
+enum DailyObjectiveType {
     case finishTwoTasksToday
     case feedPet
     case makePetHappy
+}
+
+struct DailyObjective {
+    private(set) var type: DailyObjectiveType
+    var date: Date
     
     func isComplete(using manager: DailyObjectiveManager) -> Bool {
         let animalManager = manager.animalManager!
-        switch self {
+        switch type {
         case .finishTwoTasksToday:
             return finishTwoTasksTodayIsComplete(animalManager)
         case .feedPet:
@@ -31,11 +36,21 @@ enum DailyObjective {
     }
     
     private func feedPetIsComplete(_ manager: AnimalManager) -> Bool {
-       return true
+        for purchase in manager.purchaseHistory.filter({ Calendar.current.isDateInToday($0.timestamp) }) {
+            if purchase.item.category == .food {
+                return true
+            }
+        }
+        return false
     }
     
     private func makePetHappyIsComplete(_ manager: AnimalManager) -> Bool {
-        return true
+        for purchase in manager.purchaseHistory.filter({ Calendar.current.isDateInToday($0.timestamp) }) {
+            if purchase.item.category == .accessories || purchase.item.category == .backgrounds {
+                return true
+            }
+        }
+        return false
     }
 }
 
@@ -45,10 +60,29 @@ final class DailyObjectiveManager {
     var completedObjectives: [DailyObjective] = []
     
     func assignNewObjective() {
-        
+        if let objective = currentObjective, Calendar.current.isDateInYesterday(objective.date) {
+            completedObjectives.append(objective)
+            currentObjective = createNewObjective()
+        }
     }
     
     func completeObjective() {
+        if let objective = currentObjective { completedObjectives.append(objective)
+        }
+    }
+    
+    private func createNewObjective() -> DailyObjective {
+        let allTypes: [DailyObjectiveType] = [
+            .finishTwoTasksToday,
+            .feedPet,
+            .makePetHappy
+        ]
         
+        let randomType = allTypes.randomElement() ?? .finishTwoTasksToday
+        
+        return DailyObjective(
+            type: randomType,
+            date: Date()
+        )
     }
 }

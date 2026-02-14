@@ -26,7 +26,7 @@ class ShopViewController: UIViewController {
         title = "Shop"
         
         // Embed SwiftUI ShopView
-        let hosting = UIHostingController(rootView: ShopView(animalManager: animalManager))
+        let hosting = UIHostingController(rootView: ShopView(animalManager: AnimalManager.shared))
         addChild(hosting)
         hosting.view.translatesAutoresizingMaskIntoConstraints = false
         hosting.view.backgroundColor = .clear

@@ -123,26 +123,20 @@ struct TaskListView: View {
         }
         .onAppear {
             // Link the store to the global animal manager
-            store.animalManager = animalManager
+            store.animalManager = AnimalManager.shared
         }
     }
     
     private func awardTaskCompletion(for habit: Habit) {
-        // Award coins for completing the task
+        // Use AnimalManager to award coins and apply stat increases
         let coinsEarned = 25 // Base coins for any completed task
         
-        // Try to apply the benefits through AnimalManager if available
-        // Since AnimalManager doesn't have a direct method for applying habit benefits,
-        // we would need to create ShopItems that match the habit's benefits
-        // For now, we'll just award coins (this would need to be implemented in AnimalManager)
-        
-        print("Task completed: \(habit.displayName)")
-        print("Coins earned: \(coinsEarned)")
-        print("Happiness increase: \(habit.happinessIncrease)")
-        print("Health increase: \(habit.healthIncrease)")
-        print("Hunger increase: \(habit.hungerIncrease)")
-        
-        // TODO: Implement coin awarding and stat increases in AnimalManager
+        AnimalManager.shared.awardTaskCompletion(
+            coinsEarned: coinsEarned,
+            happinessIncrease: habit.happinessIncrease,
+            healthIncrease: habit.healthIncrease,
+            hungerIncrease: habit.hungerIncrease
+        )
     }
 }
 
