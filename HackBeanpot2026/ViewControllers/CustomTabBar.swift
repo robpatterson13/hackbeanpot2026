@@ -21,7 +21,7 @@ class CustomTabBar: UIView {
     private let tabItems = [
         TabItem(title: "Home", icon: "house", selectedIcon: "house.fill"),
         TabItem(title: "Explore", icon: "magnifyingglass", selectedIcon: "magnifyingglass"),
-        TabItem(title: "Profile", icon: "person", selectedIcon: "person.fill")
+        TabItem(title: "Shop", icon: "cart", selectedIcon: "cart.fill")
     ]
     
     override init(frame: CGRect) {
