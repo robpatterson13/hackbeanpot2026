@@ -6,9 +6,8 @@
 //
 
 import Foundation
+import SwiftUI
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 struct ContentView: View {
 
     @StateObject private var store = TaskStore()
@@ -114,18 +113,6 @@ struct CompletedDetailView: View {
             .navigationTitle("Completed Task")
             .navigationBarTitleDisplayMode(.inline)
         }
-=======
-=======
->>>>>>> Stashed changes
-class ContentViewModel {
-    var property: String
-    
-    init() {
-        self.property = "Start"
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     }
 }
 

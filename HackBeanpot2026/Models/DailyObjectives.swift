@@ -5,19 +5,21 @@
 //  Created by Rob Patterson on 2/14/26.
 //
 
-<<<<<<< Updated upstream
 import Foundation
 
-=======
->>>>>>> Stashed changes
-enum DailyObjective {
+enum DailyObjectiveType {
     case finishTwoTasksToday
     case feedPet
     case makePetHappy
+}
+
+struct DailyObjective {
+    private(set) var type: DailyObjectiveType
+    var date: Date
     
     func isComplete(using manager: DailyObjectiveManager) -> Bool {
         let animalManager = manager.animalManager!
-        switch self {
+        switch type {
         case .finishTwoTasksToday:
             return finishTwoTasksTodayIsComplete(animalManager)
         case .feedPet:
@@ -29,20 +31,26 @@ enum DailyObjective {
     
     private func finishTwoTasksTodayIsComplete(_ manager: AnimalManager) -> Bool {
         let taskManager = manager.taskManager
-<<<<<<< Updated upstream
         let tasksDoneToday = taskManager.completedTasks.filter { Calendar.current.isDateInToday($0.completedAt) }
         return tasksDoneToday.count >= 2
-=======
-        
->>>>>>> Stashed changes
     }
     
     private func feedPetIsComplete(_ manager: AnimalManager) -> Bool {
-        
+        for purchase in manager.purchaseHistory.filter({ Calendar.current.isDateInToday($0.purchaseDate) }) {
+            if purchase.item.category == .food {
+                return true
+            }
+        }
+        return false
     }
     
     private func makePetHappyIsComplete(_ manager: AnimalManager) -> Bool {
-        
+        for purchase in manager.purchaseHistory.filter({ Calendar.current.isDateInToday($0.purchaseDate) }) {
+            if purchase.item.category == .accessories || purchase.item.category == .backgrounds {
+                return true
+            }
+        }
+        return false
     }
 }
 
@@ -52,10 +60,29 @@ final class DailyObjectiveManager {
     var completedObjectives: [DailyObjective] = []
     
     func assignNewObjective() {
-        
+        if let objective = currentObjective, Calendar.current.isDateInYesterday(objective.date) {
+            completedObjectives.append(objective)
+            currentObjective = createNewObjective()
+        }
     }
     
     func completeObjective() {
+        if let objective = currentObjective { completedObjectives.append(objective)
+        }
+    }
+    
+    private func createNewObjective() -> DailyObjective {
+        let allTypes: [DailyObjectiveType] = [
+            .finishTwoTasksToday,
+            .feedPet,
+            .makePetHappy
+        ]
         
+        let randomType = allTypes.randomElement() ?? .finishTwoTasksToday
+        
+        return DailyObjective(
+            type: randomType,
+            date: Date()
+        )
     }
 }

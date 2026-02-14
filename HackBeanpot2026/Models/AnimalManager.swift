@@ -5,7 +5,11 @@
 //  Created by Rob Patterson on 2/14/26.
 //
 
+import Foundation
+
 var animalManager = AnimalManager(animal: Animal(type: .fish, status: .init(happiness: .init(value: 100), health: .init(value: 100), hunger: .init(value: 100))), shop: Shop())
+
+typealias PurchaseHistoryEntry = (item: ShopItem, purchaseDate: Date)
 
 final class AnimalManager {
 
@@ -13,6 +17,7 @@ final class AnimalManager {
     private let shop: Shop
     private(set) var coins: Int
     private(set) var selectedBackground: BackgroundType?
+    private(set) var purchaseHistory: [PurchaseHistoryEntry] = []
     
     var taskManager: TaskStore
 
@@ -20,6 +25,8 @@ final class AnimalManager {
         self.animal = animal
         self.shop = shop
         self.coins = coins
+        self.selectedBackground = BackgroundType.livingRoom
+        self.taskManager = TaskStore()
     }
 
     //error enum to handle invalid purchases
@@ -69,6 +76,9 @@ final class AnimalManager {
         // Deduct coins and clamp status values into 0...100 after applying effects.
         coins -= item.cost
         clampStatus()
+        
+        // add item to purchase history
+        purchaseHistory.append((item, Date.now))
     }
 
     
