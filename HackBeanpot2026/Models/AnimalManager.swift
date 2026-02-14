@@ -12,7 +12,7 @@ final class AnimalManager {
     private(set) var coins: Int
     private(set) var selectedBackground: BackgroundType?
     
-    var taskManager: TaskStore
+    var taskManager: TaskStore = .init()
 
     init(animal: Animal, shop: Shop, coins: Int = 0) {
         self.animal = animal

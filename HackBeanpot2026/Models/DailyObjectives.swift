@@ -5,11 +5,8 @@
 //  Created by Rob Patterson on 2/14/26.
 //
 
-<<<<<<< Updated upstream
 import Foundation
 
-=======
->>>>>>> Stashed changes
 enum DailyObjective {
     case finishTwoTasksToday
     case feedPet
@@ -29,20 +26,16 @@ enum DailyObjective {
     
     private func finishTwoTasksTodayIsComplete(_ manager: AnimalManager) -> Bool {
         let taskManager = manager.taskManager
-<<<<<<< Updated upstream
         let tasksDoneToday = taskManager.completedTasks.filter { Calendar.current.isDateInToday($0.completedAt) }
         return tasksDoneToday.count >= 2
-=======
-        
->>>>>>> Stashed changes
     }
     
     private func feedPetIsComplete(_ manager: AnimalManager) -> Bool {
-        
+       return true
     }
     
     private func makePetHappyIsComplete(_ manager: AnimalManager) -> Bool {
-        
+        return true
     }
 }
 

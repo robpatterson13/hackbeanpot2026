@@ -6,9 +6,8 @@
 //
 
 import Foundation
+import SwiftUI
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 struct ContentView: View {
 
     @StateObject private var store = TaskStore()
@@ -80,7 +79,7 @@ struct ContentView: View {
 
 struct CompletedDetailView: View {
     let completed: CompletedTask
-
+    
     var body: some View {
         NavigationView {
             VStack(spacing: 24) {
@@ -89,11 +88,11 @@ struct CompletedDetailView: View {
                     .scaledToFit()
                     .frame(width: 72, height: 72)
                     .foregroundColor(.accentColor)
-
+                
                 Text(completed.habit.displayName)
                     .font(.title2)
                     .bold()
-
+                
                 VStack(spacing: 8) {
                     HStack {
                         Image(systemName: "calendar")
@@ -107,24 +106,20 @@ struct CompletedDetailView: View {
                 .padding()
                 .background(Color(.secondarySystemBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
-
+                
                 Spacer()
             }
             .padding()
             .navigationTitle("Completed Task")
             .navigationBarTitleDisplayMode(.inline)
         }
-=======
-=======
->>>>>>> Stashed changes
+    }
+}
+
 class ContentViewModel {
     var property: String
     
     init() {
         self.property = "Start"
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     }
 }
