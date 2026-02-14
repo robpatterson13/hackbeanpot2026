@@ -10,11 +10,30 @@ protocol Buyable {
 }
 
 enum ShopCategory {
-   case accessories, backgrounds, upgrades, food
+    case accessories, backgrounds, upgrades, food
 }
 
-enum BackgroundType {
+enum BackgroundType: String, CaseIterable {
     case forest, desert, ocean, city, livingRoom
+    
+    var imageName: String {
+        return self.rawValue
+    }
+    
+    var displayName: String {
+        switch self {
+        case .forest:
+            return "Forest"
+        case .desert:
+            return "Desert"
+        case .ocean:
+            return "Ocean"
+        case .city:
+            return "City"
+        case .livingRoom:
+            return "Living Room"
+        }
+    }
 }
 
 enum UpgradeType: CaseIterable, Buyable {
