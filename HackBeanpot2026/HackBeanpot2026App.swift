@@ -1,17 +1,17 @@
+////
+////  HackBeanpot2026App.swift
+////  HackBeanpot2026
+////
+////  Created by Rob Patterson on 2/13/26.
+////
 //
-//  HackBeanpot2026App.swift
-//  HackBeanpot2026
+//import SwiftUI
 //
-//  Created by Rob Patterson on 2/13/26.
-//
-
-import SwiftUI
-
-@main
-struct HackBeanpot2026App: App {
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-        }
-    }
-}
+//@main
+//struct HackBeanpot2026App: App {
+//    var body: some Scene {
+//        WindowGroup {
+//            ContentView()
+//        }
+//    }
+//}
