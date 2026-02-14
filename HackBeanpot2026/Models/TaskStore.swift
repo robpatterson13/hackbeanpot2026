@@ -34,9 +34,6 @@ final class TaskStore: ObservableObject {
     private let calendar: Calendar
     private let generationInterval: TimeInterval = 60
 
-    // Injected manager to update the pet when tasks complete
-    private let animalManager: AnimalManager?
-
     // Cooldown per habit until the end of its active window
     private var cooldownUntil: [Habit: Date] = [:]
 
@@ -211,4 +208,3 @@ final class TaskStore: ObservableObject {
         animalManager.animal.status.hunger.value    = max(minVal, min(maxVal, animalManager.animal.status.hunger.value))
     }
 }
-

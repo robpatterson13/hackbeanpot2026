@@ -18,38 +18,47 @@ enum Habit: CaseIterable {
         case screenshot(prompt: String)
     }
 
-    // Tunable values: adjust per your game balance
     var happinessIncrease: Int {
         switch self {
-        case .sleep: return 8
-        case .leetcode: return 6
-        case .jobs: return 7
-        case .shower: return 5
-        case .water: return 3
-        case .outside: return 9
+        case .sleep:
+            return 5
+        case .leetcode:
+            return 2
+        case .jobs:
+            return 2
+        case .shower:
+            return 1
+        case .water:
+            return 2
+        case .outside:
+            return 5
         }
     }
-
+    
     var healthIncrease: Int {
         switch self {
-        case .sleep: return 10
-        case .leetcode: return 2
-        case .jobs: return 3
-        case .shower: return 6
-        case .water: return 7
-        case .outside: return 5
+        case .sleep:
+            return 5
+        case .leetcode:
+            return 2
+        case .jobs:
+            return 2
+        case .shower:
+            return 4
+        case .water:
+            return 5
+        case .outside:
+            return 4
         }
     }
 
-    // Positive numbers here indicate “reducing hunger” magnitude shown in UI.
-    // If you want “hunger” to decrease, you can interpret this as satiation points.
     var hungerIncrease: Int {
         switch self {
-        case .sleep: return 2
-        case .leetcode: return 1
-        case .jobs: return 1
+        case .sleep: return 0
+        case .leetcode: return 10
+        case .jobs: return 8
         case .shower: return 0
-        case .water: return 4
+        case .water: return 5
         case .outside: return 2
         }
     }
