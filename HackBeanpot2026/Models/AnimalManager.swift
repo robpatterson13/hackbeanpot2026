@@ -5,7 +5,7 @@
 //  Created by Rob Patterson on 2/14/26.
 //
 
-var animalManager = AnimalManager(animal: Animal(type: .fish, status: .init(happiness: .init(value: 100), health: .init(value: 100), hunger: .init(value: 100))), shop: Shop())
+var animalManager = AnimalManager(animal: Animal(type: .blob, status: .init(happiness: .init(value: 100), health: .init(value: 100), hunger: .init(value: 100))), shop: Shop())
 
 final class AnimalManager {
 
