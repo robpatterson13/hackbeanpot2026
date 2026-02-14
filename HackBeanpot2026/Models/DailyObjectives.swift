@@ -40,11 +40,12 @@ struct DailyObjective {
     }
     
     private func feedPetIsComplete(_ manager: AnimalManager) -> Bool {
-        for purchase in manager.purchaseHistory.filter({ Calendar.current.isDateInToday($0.purchaseDate) }) {
-            if purchase.item.category == .food {
-                return true
-            }
-        }
+        for purchase in manager.purchaseHistory.filter({ Calendar.current.isDateInToday($0.timestamp) }) {
+               if purchase.item.category == .food {
+                   return true
+               }
+           }
+           return false
         return false
     }
     

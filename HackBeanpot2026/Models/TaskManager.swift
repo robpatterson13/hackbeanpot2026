@@ -9,9 +9,7 @@ import Foundation
 import Combine
 
 struct CompletedTask: Identifiable, Equatable {
-    // Use a fresh UUID so completed items have a distinct identity
     let id: UUID
-    // Keep a reference to the originating task if needed
     let sourceTaskID: UUID
     let habit: Habit
     let completedAt: Date
@@ -38,7 +36,6 @@ final class TaskManager: ObservableObject {
     private let calendar: Calendar
     private let generationInterval: TimeInterval = 60
 
-    // Cooldown per habit until the end of its active window
     private var cooldownUntil: [Habit: Date] = [:]
 
     init(calendar: Calendar = .current, animalManager: AnimalManager? = nil) {

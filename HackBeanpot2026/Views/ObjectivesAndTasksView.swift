@@ -2,19 +2,11 @@ import SwiftUI
 import Combine
 
 struct ObjectivesAndTasksView: View {
+    let animalManager: AnimalManager
     @StateObject private var manager = TaskManager()
     @StateObject private var dailyObjectives = DailyObjectiveManager()
     
     @State private var selectedCompleted: CompletedTask? = nil
-    @State private var showAllTaskTypes = false // optional debug toggle
-    
-    private var activeTasksToDisplay: [HabitTask] {
-        if showAllTaskTypes {
-            return HabitTask.allTasks
-        } else {
-            return manager.tasks
-        }
-    }
     
     var body: some View {
         NavigationView {
@@ -79,13 +71,11 @@ struct ObjectivesAndTasksView: View {
                 }
                 
                 // Active tasks
-                if !activeTasksToDisplay.isEmpty {
+                if !manager.tasks.isEmpty {
                     Section("Active Tasks") {
-                        ForEach(activeTasksToDisplay) { task in
+                        ForEach(manager.tasks) { task in
                             TaskView(task: task) {
-                                if !showAllTaskTypes {
-                                    manager.complete(task)
-                                }
+                                manager.complete(task)
                             }
                         }
                     }
@@ -122,23 +112,11 @@ struct ObjectivesAndTasksView: View {
                 }
             }
             .navigationTitle("Today")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Toggle(isOn: $showAllTaskTypes) {
-                        Text("Show All")
-                    }
-                    .toggleStyle(.switch)
-                }
-            }
             .overlay {
-                if activeTasksToDisplay.isEmpty && manager.completedTasks.isEmpty && dailyObjectives.currentObjective == nil {
+                if manager.tasks.isEmpty && manager.completedTasks.isEmpty && dailyObjectives.currentObjective == nil {
                     ContentUnavailableView("No Tasks Right Now",
                                            systemImage: "sun.max",
                                            description: Text("Check back later — tasks and objectives appear throughout the day."))
-                } else if activeTasksToDisplay.isEmpty && !manager.completedTasks.isEmpty {
-                    ContentUnavailableView("Completed all active tasks",
-                                           systemImage: "checkmark.seal",
-                                           description: Text("Great job! New tasks will appear when their time windows open."))
                 }
             }
             .sheet(item: $selectedCompleted) { completed in
@@ -174,12 +152,12 @@ struct ObjectivesAndTasksView: View {
             return (current: Double(tasksDoneToday.count), total: 2.0)
         case .feedPet:
             let didFeed = animalManager.purchaseHistory
-                .filter { Calendar.current.isDateInToday($0.purchaseDate) }
+                .filter { Calendar.current.isDateInToday($0.timestamp) }
                 .contains { $0.item.category == .food }
             return (current: didFeed ? 1.0 : 0.0, total: 1.0)
         case .makePetHappy:
             let didMakeHappy = animalManager.purchaseHistory
-                .filter { Calendar.current.isDateInToday($0.purchaseDate) }
+                .filter { Calendar.current.isDateInToday($0.timestamp) }
                 .contains { $0.item.category == .accessories || $0.item.category == .backgrounds }
             return (current: didMakeHappy ? 1.0 : 0.0, total: 1.0)
         }
