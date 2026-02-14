@@ -7,12 +7,24 @@ import SwiftUI
 import Combine
 import UIKit
 
+private func hungerSymbolName() -> String {
+    // Prefer "bone.fill"; if unavailable on this OS, fall back to "fork.knife"
+    if UIImage(systemName: "bone.fill") != nil {
+        return "bone.fill"
+    } else if UIImage(systemName: "drumstick.fill") != nil {
+        return "drumstick.fill"
+    } else {
+        return "fork.knife"
+    }
+}
+
 struct TaskView: View {
     let task: HabitTask
     var onComplete: (() -> Void)? = nil
 
     @State private var now: Date = Date()
     @State private var showVerificationSheet = false
+    @State private var showPointsSheet = false
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var timeRemaining: TimeInterval {
@@ -81,7 +93,7 @@ struct TaskView: View {
                             .font(.caption)
                             .foregroundColor(.blue)
                     } icon: {
-                        Image(systemName: "drop.fill")
+                        Image(systemName: hungerSymbolName())
                             .foregroundColor(.blue)
                     }
                 }
@@ -91,7 +103,22 @@ struct TaskView: View {
         .contentShape(Rectangle())
         .onTapGesture {
             guard !task.isExpired else { return }
-            showVerificationSheet = true
+            // Optional: show a points breakdown before verification
+            showPointsSheet = true
+        }
+        .sheet(isPresented: $showPointsSheet) {
+            PointsBreakdownSheet(
+                habit: task.habit,
+                onContinue: {
+                    showPointsSheet = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        showVerificationSheet = true
+                    }
+                },
+                onCancel: {
+                    showPointsSheet = false
+                }
+            )
         }
         .sheet(isPresented: $showVerificationSheet, content: {
             verificationSheetView()
@@ -106,6 +133,54 @@ struct TaskView: View {
         VerificationSheet(habit: task.habit, onVerified: {
             onComplete?()
         })
+    }
+}
+
+private struct PointsBreakdownSheet: View {
+    let habit: Habit
+    var onContinue: () -> Void
+    var onCancel: () -> Void
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("Rewards")
+                .font(.title2)
+                .bold()
+                .padding(.top)
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: "heart.fill").foregroundColor(.red)
+                    Text("Health +\(habit.healthIncrease)")
+                        .font(.headline)
+                }
+                HStack {
+                    Image(systemName: "face.smiling").foregroundColor(.orange)
+                    Text("Happiness +\(habit.happinessIncrease)")
+                        .font(.headline)
+                }
+                HStack {
+                    Image(systemName: hungerSymbolName()).foregroundColor(.blue)
+                    Text("Hunger +\(habit.hungerIncrease)")
+                        .font(.headline)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Spacer()
+
+            Button("Continue") {
+                onContinue()
+            }
+            .buttonStyle(.borderedProminent)
+
+            Button("Cancel") {
+                onCancel()
+            }
+            .buttonStyle(.bordered)
+        }
+        .padding()
+        .presentationDetents([.fraction(0.35), .medium])
     }
 }
 
@@ -273,3 +348,4 @@ struct ImagePicker: UIViewControllerRepresentable {
         }
     }
 }
+

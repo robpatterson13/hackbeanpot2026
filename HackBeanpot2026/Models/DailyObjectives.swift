@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 
 enum DailyObjectiveType {
     case finishTwoTasksToday
@@ -18,7 +19,10 @@ struct DailyObjective {
     var date: Date
     
     func isComplete(using manager: DailyObjectiveManager) -> Bool {
-        let animalManager = manager.animalManager!
+        guard let animalManager = manager.animalManager else {
+            // If the animal manager isn't wired yet, treat as not complete
+            return false
+        }
         switch type {
         case .finishTwoTasksToday:
             return finishTwoTasksTodayIsComplete(animalManager)
@@ -37,10 +41,11 @@ struct DailyObjective {
     
     private func feedPetIsComplete(_ manager: AnimalManager) -> Bool {
         for purchase in manager.purchaseHistory.filter({ Calendar.current.isDateInToday($0.timestamp) }) {
-            if purchase.item.category == .food {
-                return true
-            }
-        }
+               if purchase.item.category == .food {
+                   return true
+               }
+           }
+           return false
         return false
     }
     
@@ -54,10 +59,12 @@ struct DailyObjective {
     }
 }
 
-final class DailyObjectiveManager {
+@MainActor
+final class DailyObjectiveManager: ObservableObject {
     weak var animalManager: AnimalManager?
-    var currentObjective: DailyObjective?
-    var completedObjectives: [DailyObjective] = []
+    
+    @Published var currentObjective: DailyObjective?
+    @Published var completedObjectives: [DailyObjective] = []
     
     func assignNewObjective() {
         if let objective = currentObjective, Calendar.current.isDateInYesterday(objective.date) {
@@ -67,7 +74,8 @@ final class DailyObjectiveManager {
     }
     
     func completeObjective() {
-        if let objective = currentObjective { completedObjectives.append(objective)
+        if let objective = currentObjective {
+            completedObjectives.append(objective)
         }
     }
     

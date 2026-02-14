@@ -31,8 +31,11 @@ final class AnimalManager: ObservableObject {
     @Published private(set) var animal: Animal
     private let shop: Shop
     @Published private(set) var coins: Int
-    let taskManager: TaskStore
+    let taskManager: TaskManager
     @Published private(set) var purchaseHistory: [PurchaseRecord] = []
+    
+    // Additional state used by objectives/UI
+    @Published private(set) var selectedBackground: BackgroundType? = .livingRoom
     
     // MARK: - UserDefaults Keys
     private enum UserDefaultsKeys {
@@ -46,7 +49,7 @@ final class AnimalManager: ObservableObject {
 
     private init() {
         self.shop = Shop()
-        self.taskManager = TaskStore()
+        self.taskManager = TaskManager()
         
         // Load persisted data or create defaults
         let savedAnimalType = UserDefaults.standard.string(forKey: UserDefaultsKeys.animalType) ?? "blob"
@@ -77,7 +80,7 @@ final class AnimalManager: ObservableObject {
         self.taskManager.animalManager = self
     }
     
-    private init(animal: Animal, shop: Shop, taskManager: TaskStore, coins: Int = 0) {
+    private init(animal: Animal, shop: Shop, taskManager: TaskManager, coins: Int = 0) {
         self.animal = animal
         self.shop = shop
         self.taskManager = taskManager
@@ -95,21 +98,18 @@ final class AnimalManager: ObservableObject {
         let status = AnimalStatus(happiness: happiness, health: health, hunger: hunger)
         let shop = Shop()
         let animal = Animal(type: .blob, status: status)
-        let taskManager = TaskStore()
+        let taskManager = TaskManager()
         
         self.init(animal: animal, shop: shop, taskManager: taskManager)
     }
 
-    //error enum to handle invalid purchases
     enum PurchaseError: Error {
         case insufficientFunds
         case invalidUpgrade
     }
 
-    //Check if you can upgrade or if you have enough coins for the given item
     func canBuy(_ item: ShopItem) -> Bool {
         switch item {
-            //if upgrade check if the animal is next to be unlocked
         case .upgrade(let upgrade):
             return coins >= item.cost && upgrade.isUnlocked(animal.type)
         default:
@@ -117,18 +117,11 @@ final class AnimalManager: ObservableObject {
         }
     }
 
-    //buys an item from the shop, if user doesn't have enough coins or can't upgrade throw purchase error
-    //if we are upgrading we change the animal accordingly, same with background,
-    //then subtract the number of coins if successful
-    /// Attempts to buy a `ShopItem` and apply its effect to the animal.
-    /// - Throws: `PurchaseError.insufficientFunds` if you don't have enough coins,
-    ///           `PurchaseError.invalidUpgrade` if the requested upgrade isn't unlocked for the animal's current type
     func buy(_ item: ShopItem) throws(PurchaseError) {
         guard coins >= item.cost else {
             throw PurchaseError.insufficientFunds
         }
 
-        // Apply the item's effect or perform the upgrade.
         switch item {
         case .upgrade(let upgrade):
             guard upgrade.isUnlocked(animal.type) else {
@@ -140,7 +133,6 @@ final class AnimalManager: ObservableObject {
             apply(levelIncrease: item.increase)
         }
 
-        // Deduct coins and clamp status values into 0...100 after applying effects.
         coins -= item.cost
         clampStatus()
         
@@ -152,8 +144,6 @@ final class AnimalManager: ObservableObject {
         saveState()
     }
 
-    
-    //Apply an increase in happiness, health, or hunger
     private func apply(levelIncrease level: AnimalLevel) {
         if let add = level as? AnimalHappiness {
             animal.status.happiness.value += add.value
@@ -174,31 +164,17 @@ final class AnimalManager: ObservableObject {
     
     // MARK: - Task Completion Rewards
     
-    /// Awards coins and applies stat increases for completing a habit task
     func awardTaskCompletion(coinsEarned: Int, happinessIncrease: Int, healthIncrease: Int, hungerIncrease: Int) {
-        // Award coins
         coins += coinsEarned
-        
-        // Apply stat increases
         animal.status.happiness.value += happinessIncrease
         animal.status.health.value += healthIncrease
         animal.status.hunger.value += hungerIncrease
-        
-        // Clamp values to valid range
         clampStatus()
-        
-        // Save the updated state
         saveState()
-        
-        print("Task completed! Awarded \(coinsEarned) coins")
-        print("Happiness: +\(happinessIncrease), Health: +\(healthIncrease), Hunger: +\(hungerIncrease)")
-        print("Current stats - Happiness: \(animal.status.happiness.value), Health: \(animal.status.health.value), Hunger: \(animal.status.hunger.value)")
-        print("Total coins: \(coins)")
     }
     
     // MARK: - Persistence
     
-    /// Saves the current state to UserDefaults
     private func saveState() {
         UserDefaults.standard.set(animal.type.rawValue, forKey: UserDefaultsKeys.animalType)
         UserDefaults.standard.set(animal.status.happiness.value, forKey: UserDefaultsKeys.happiness)
@@ -212,7 +188,6 @@ final class AnimalManager: ObservableObject {
         }
     }
     
-    /// Manually save state (can be called externally)
     func save() {
         saveState()
     }
@@ -280,7 +255,8 @@ extension AnimalType {
         case "cat": return .cat
         case "dog": return .dog
         case "unicorn": return .unicorn
-        default: return .blob // default to blob if unknown
+        default: return .blob
         }
     }
 }
+
