@@ -5,12 +5,15 @@
 //  Created by Rob Patterson on 2/14/26.
 //
 
+var animalManager = AnimalManager(animal: Animal(type: .fish, status: .init(happiness: .init(value: 100), health: .init(value: 100), hunger: .init(value: 100))), shop: Shop())
+
 final class AnimalManager {
 
     private(set) var animal: Animal
     private let shop: Shop
     private(set) var coins: Int
-    private(set) var selectedBackground: BackgroundType?
+    
+    var taskManager: TaskStore = .init()
 
     init(animal: Animal, shop: Shop, coins: Int = 0) {
         self.animal = animal
@@ -53,10 +56,6 @@ final class AnimalManager {
                 throw PurchaseError.invalidUpgrade
             }
             animal.type = upgrade.asAnimalType
-
-        case .background(let bg):
-            selectedBackground = bg
-            apply(levelIncrease: item.increase)
 
         default:
             apply(levelIncrease: item.increase)
