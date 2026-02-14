@@ -13,7 +13,7 @@ enum ShopCategory {
     case accessories, backgrounds, upgrades, food
 }
 
-enum BackgroundType: String, CaseIterable {
+enum BackgroundType: String, CaseIterable, Codable {
     case forest, desert, ocean, city, livingRoom
     
     var imageName: String {
@@ -36,7 +36,7 @@ enum BackgroundType: String, CaseIterable {
     }
 }
 
-enum UpgradeType: CaseIterable, Buyable {
+enum UpgradeType: CaseIterable, Buyable, Codable {
     case fish, gecko, cat, dog, unicorn
     
     func isUnlocked(_ existing: AnimalType) -> Bool {
@@ -68,7 +68,7 @@ enum UpgradeType: CaseIterable, Buyable {
     }
 }
 
-enum ShopItem: Buyable {
+enum ShopItem: Buyable, Codable {
     case steak
     case fedora
     case sunglasses

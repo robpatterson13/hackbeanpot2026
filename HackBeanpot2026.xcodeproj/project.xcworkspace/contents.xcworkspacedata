@@ -4,16 +4,4 @@
    <FileRef
       location = "self:">
    </FileRef>
-   <FileRef
-      location = "group:LocationManager.swift">
-   </FileRef>
-   <FileRef
-      location = "group:LocationVerificationView.swift">
-   </FileRef>
-   <FileRef
-      location = "group:Info.plist">
-   </FileRef>
-   <FileRef
-      location = "group:LocationIntegrationGuide.md">
-   </FileRef>
 </Workspace>

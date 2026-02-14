@@ -49,7 +49,7 @@ struct DailyObjective {
     }
     
     private func makePetHappyIsComplete(_ manager: AnimalManager) -> Bool {
-        for purchase in manager.purchaseHistory.filter({ Calendar.current.isDateInToday($0.purchaseDate) }) {
+        for purchase in manager.purchaseHistory.filter({ Calendar.current.isDateInToday($0.timestamp) }) {
             if purchase.item.category == .accessories || purchase.item.category == .backgrounds {
                 return true
             }
