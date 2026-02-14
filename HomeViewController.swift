@@ -6,10 +6,9 @@
 //
 
 import UIKit
+import SwiftUI
 
 class HomeViewController: UIViewController {
-    
-    private let viewModel = ContentViewModel()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -18,61 +17,56 @@ class HomeViewController: UIViewController {
     }
     
     private func configureForEdgeToEdgeLayout() {
-        // Configure this view controller for edge-to-edge layout
-        edgesForExtendedLayout = .all
+        // Configure this view controller for full edge-to-edge layout
+        edgesForExtendedLayout = UIRectEdge.all
         extendedLayoutIncludesOpaqueBars = true
         automaticallyAdjustsScrollViewInsets = false
+        
+        // Remove any additional safe area insets
+        additionalSafeAreaInsets = UIEdgeInsets.zero
     }
     
     private func setupUI() {
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = UIColor.systemBackground
         title = "Home"
         
-        // Create main content
-        let stackView = UIStackView()
-        stackView.axis = .vertical
-        stackView.spacing = 20
-        stackView.alignment = .center
-        stackView.translatesAutoresizingMaskIntoConstraints = false
+        // Create and configure the SwiftUI hosting controller to fill the entire screen
+        let swiftUIHostingController = UIHostingController(rootView: TestView())
+        addChild(swiftUIHostingController)
+        swiftUIHostingController.view.translatesAutoresizingMaskIntoConstraints = false
+        swiftUIHostingController.view.backgroundColor = UIColor.clear
         
-        let button = UIButton(type: .system)
-        button.setTitle("Hello, World!", for: .normal)
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
-        button.backgroundColor = .systemBlue
-        button.setTitleColor(.white, for: .normal)
-        button.layer.cornerRadius = 12
-        button.contentEdgeInsets = UIEdgeInsets(top: 12, left: 24, bottom: 12, right: 24)
-        button.addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
+        // Configure the SwiftUI hosting controller for edge-to-edge layout
+        swiftUIHostingController.edgesForExtendedLayout = UIRectEdge.all
+        swiftUIHostingController.extendedLayoutIncludesOpaqueBars = true
         
-        let label = UILabel()
-        label.text = viewModel.property
-        label.font = UIFont.systemFont(ofSize: 16)
-        label.textColor = .label
+        view.addSubview(swiftUIHostingController.view)
         
-        stackView.addArrangedSubview(button)
-        stackView.addArrangedSubview(label)
-        
-        view.addSubview(stackView)
-        
+        // Make the SwiftUI view fill the entire screen bounds (not just safe area)
         NSLayoutConstraint.activate([
-            stackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            stackView.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor)
+            swiftUIHostingController.view.topAnchor.constraint(equalTo: view.topAnchor),
+            swiftUIHostingController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            swiftUIHostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            swiftUIHostingController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
         
-        // Store label reference to update it
-        view.subviews.forEach { subview in
-            if let stack = subview as? UIStackView {
-                if let label = stack.arrangedSubviews.last as? UILabel {
-                    label.tag = 100 // Tag for easy reference
-                }
-            }
-        }
+        // Complete the child view controller setup
+        swiftUIHostingController.didMove(toParent: self)
     }
     
-    @objc private func buttonTapped() {
-        viewModel.property = "Switched"
-        if let label = view.viewWithTag(100) as? UILabel {
-            label.text = viewModel.property
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        // Ensure the view extends to full screen bounds
+        view.frame = view.superview?.bounds ?? view.frame
+        
+        // Make sure all child views also extend to full bounds
+        view.subviews.forEach { subview in
+            if subview.translatesAutoresizingMaskIntoConstraints == false {
+                // Let Auto Layout handle constraint-based views
+                return
+            }
+            subview.frame = view.bounds
         }
     }
 }

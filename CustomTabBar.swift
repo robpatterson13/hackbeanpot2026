@@ -35,23 +35,8 @@ class CustomTabBar: UIView {
     }
     
     private func setupUI() {
-        backgroundColor = UIColor.systemBackground.withAlphaComponent(0.95)
+        backgroundColor = UIColor.clear
         layer.cornerRadius = 20
-        
-        // Add blur effect for modern look
-        let blurEffect = UIBlurEffect(style: .systemMaterial)
-        let blurView = UIVisualEffectView(effect: blurEffect)
-        blurView.translatesAutoresizingMaskIntoConstraints = false
-        blurView.layer.cornerRadius = 20
-        blurView.clipsToBounds = true
-        insertSubview(blurView, at: 0)
-        
-        NSLayoutConstraint.activate([
-            blurView.topAnchor.constraint(equalTo: topAnchor),
-            blurView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            blurView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            blurView.bottomAnchor.constraint(equalTo: bottomAnchor)
-        ])
         
         setupTabButtons()
     }
