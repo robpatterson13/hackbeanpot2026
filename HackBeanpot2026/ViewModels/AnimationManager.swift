@@ -5,6 +5,8 @@
 //  Created by Rob Patterson on 2/14/26.
 //
 
+import Foundation
+
 // Shared animation manager to persist timer across tab changes
 @Observable
 class AnimationManager {
