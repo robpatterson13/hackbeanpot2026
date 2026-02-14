@@ -72,7 +72,7 @@ enum Habit: CaseIterable {
         case .leetcode: return "brain.head.profile"
         case .jobs: return "briefcase.fill"
         case .shower: return "shower.fill"
-        case .water: return "drop.fill"
+        case .water: return "bone.fill"       // changed from "drop.fill" to represent hunger
         case .outside: return "leaf.fill"
         }
     }
@@ -94,3 +94,4 @@ enum Habit: CaseIterable {
         }
     }
 }
+

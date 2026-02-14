@@ -7,23 +7,53 @@
 
 import Foundation
 import SwiftUI
+import UIKit
+
+// Helper to choose a hunger icon with fallbacks across OS versions.
+private func hungerSymbolName() -> String {
+    if UIImage(systemName: "bone.fill") != nil {
+        return "bone.fill"
+    } else if UIImage(systemName: "drumstick.fill") != nil {
+        return "drumstick.fill"
+    } else {
+        return "fork.knife"
+    }
+}
 
 struct ContentView: View {
 
     @StateObject private var store = TaskStore()
+
+    // DEBUG: Toggle this to show one row for every habit type regardless of TaskStore generation.
+    // You can comment this out or set to false to return to normal behavior.
+    @State private var showAllTaskTypes = false
+
     @State private var selectedCompleted: CompletedTask? = nil
     @State private var showCompletedDetail = false
+
+    // Active items to show: either the real store.tasks or a debug list of all habits.
+    private var activeTasksToDisplay: [HabitTask] {
+        if showAllTaskTypes {
+            return HabitTask.allTasks
+        } else {
+            return store.tasks
+        }
+    }
 
     var body: some View {
         NavigationView {
             List {
                 // Active tasks
-                if !store.tasks.isEmpty {
+                if !activeTasksToDisplay.isEmpty {
                     Section("Active") {
-                        ForEach(store.tasks) { task in
+                        ForEach(activeTasksToDisplay) { task in
+                            // When showAllTaskTypes is on, these rows won’t be in the store, so completion won’t remove them.
+                            // That’s fine for visual testing. Turn off the toggle to return to real behavior.
                             TaskView(task: task) {
-                                // completion handler from TaskView
-                                store.complete(task)
+                                // completion handler from TaskView (only meaningful when using store.tasks)
+                                if !showAllTaskTypes {
+                                    store.complete(task)
+                                }
                             }
                         }
                     }
@@ -60,12 +90,28 @@ struct ContentView: View {
                     }
                 }
             }
+            .toolbar {
+                // Simple debug toggle you can comment out.
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Toggle(isOn: $showAllTaskTypes) {
+                        Text("Show All")
+                    }
+                    .toggleStyle(.switch)
+                }
+            }
             .navigationTitle("Tasks")
             .overlay {
-                if store.tasks.isEmpty && store.completedTasks.isEmpty {
+                // Overlays:
+                // 1) No tasks and no completed -> original empty state
+                // 2) No active tasks but there are completed -> “Completed all active tasks.”
+                if activeTasksToDisplay.isEmpty && store.completedTasks.isEmpty {
                     ContentUnavailableView("No Tasks Right Now",
                                            systemImage: "sun.max",
                                            description: Text("Check back later — tasks appear throughout the day."))
+                } else if activeTasksToDisplay.isEmpty && !store.completedTasks.isEmpty {
+                    ContentUnavailableView("Completed all active tasks",
+                                           systemImage: "checkmark.seal",
+                                           description: Text("Great job! New tasks will appear when their time windows open."))
                 }
             }
             .sheet(isPresented: $showCompletedDetail) {
@@ -106,7 +152,32 @@ struct CompletedDetailView: View {
                 .padding()
                 .background(Color(.secondarySystemBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
-                
+
+                // Rewards breakdown for completed task
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Rewards")
+                        .font(.headline)
+                    HStack {
+                        Image(systemName: "heart.fill").foregroundColor(.red)
+                        Text("Health +\(completed.habit.healthIncrease)")
+                        Spacer()
+                    }
+                    HStack {
+                        Image(systemName: "face.smiling").foregroundColor(.orange)
+                        Text("Happiness +\(completed.habit.happinessIncrease)")
+                        Spacer()
+                    }
+                    HStack {
+                        Image(systemName: hungerSymbolName()).foregroundColor(.blue)
+                        Text("Hunger +\(completed.habit.hungerIncrease)")
+                        Spacer()
+                    }
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color(.secondarySystemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+
                 Spacer()
             }
             .padding()
