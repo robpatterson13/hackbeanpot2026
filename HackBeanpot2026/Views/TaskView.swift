@@ -277,6 +277,18 @@ struct VerificationSheet: View {
                     })
                     .buttonStyle(.bordered)
                 }
+            
+            case .location(let prompt):
+                LocationVerificationView(
+                    prompt: prompt,
+                    onComplete: {
+                        onVerified()
+                        dismiss()
+                    },
+                    onCancel: {
+                        dismiss()
+                    }
+                )
             }
             Spacer()
         }
