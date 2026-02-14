@@ -15,3 +15,4 @@ struct HackBeanpot2026App: App {
         }
     }
 }
+
