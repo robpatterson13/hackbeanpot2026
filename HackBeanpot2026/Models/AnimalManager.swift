@@ -19,26 +19,23 @@ final class AnimalManager {
     private(set) var selectedBackground: BackgroundType?
     private(set) var purchaseHistory: [PurchaseHistoryEntry] = []
     
-    var taskManager: TaskStore = .init()
+    var taskManager: TaskManager = .init()
 
     init(animal: Animal, shop: Shop, coins: Int = 0) {
         self.animal = animal
         self.shop = shop
         self.coins = coins
         self.selectedBackground = BackgroundType.livingRoom
-        self.taskManager = TaskStore()
+        self.taskManager = TaskManager()
     }
 
-    //error enum to handle invalid purchases
     enum PurchaseError: Error {
         case insufficientFunds
         case invalidUpgrade
     }
 
-    //Check if you can upgrade or if you have enough coins for the given item
     func canBuy(_ item: ShopItem) -> Bool {
         switch item {
-            //if upgrade check if the animal is next to be unlocked
         case .upgrade(let upgrade):
             return coins >= item.cost && upgrade.isUnlocked(animal.type)
         default:
@@ -46,18 +43,11 @@ final class AnimalManager {
         }
     }
 
-    //buys an item from the shop, if user doesn't have enough coins or can't upgrade throw purchase error
-    //if we are upgrading we change the animal accordingly, same with background,
-    //then subtract the number of coins if successful
-    /// Attempts to buy a `ShopItem` and apply its effect to the animal.
-    /// - Throws: `PurchaseError.insufficientFunds` if you don't have enough coins,
-    ///           `PurchaseError.invalidUpgrade` if the requested upgrade isn't unlocked for the animal's current type
     func buy(_ item: ShopItem) throws(PurchaseError) {
         guard coins >= item.cost else {
             throw PurchaseError.insufficientFunds
         }
 
-        // Apply the item's effect or perform the upgrade.
         switch item {
         case .upgrade(let upgrade):
             guard upgrade.isUnlocked(animal.type) else {
@@ -69,16 +59,12 @@ final class AnimalManager {
             apply(levelIncrease: item.increase)
         }
 
-        // Deduct coins and clamp status values into 0...100 after applying effects.
         coins -= item.cost
         clampStatus()
         
-        // add item to purchase history
         purchaseHistory.append((item, Date.now))
     }
 
-    
-    //Apply an increase in happiness, health, or hunger
     private func apply(levelIncrease level: AnimalLevel) {
         if let add = level as? AnimalHappiness {
             animal.status.happiness.value += add.value

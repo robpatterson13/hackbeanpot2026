@@ -1,5 +1,5 @@
 //
-//  TaskStore.swift
+//  TaskManager.swift
 //  HackBeanpot2026
 //
 //  Created by Rob Patterson on 2/14/26.
@@ -9,12 +9,16 @@ import Foundation
 import Combine
 
 struct CompletedTask: Identifiable, Equatable {
+    // Use a fresh UUID so completed items have a distinct identity
     let id: UUID
+    // Keep a reference to the originating task if needed
+    let sourceTaskID: UUID
     let habit: Habit
     let completedAt: Date
 
     init(from task: HabitTask, completedAt: Date = Date()) {
-        self.id = task.id
+        self.id = UUID()
+        self.sourceTaskID = task.id
         self.habit = task.habit
         self.completedAt = completedAt
     }
@@ -25,7 +29,7 @@ struct CompletedTask: Identifiable, Equatable {
 }
 
 @MainActor
-final class TaskStore: ObservableObject {
+final class TaskManager: ObservableObject {
     @Published private(set) var tasks: [HabitTask] = []
     @Published private(set) var completedTasks: [CompletedTask] = []
 
@@ -138,8 +142,6 @@ final class TaskStore: ObservableObject {
 
         switch habit {
         case .sleep:
-            // If within 21:00–23:59, end = midnight (start of next day)
-            // If within 00:00–05:59, end = today at 06:00
             if hour >= 21 {
                 return calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: date))
             } else if hour < 6 {
@@ -149,21 +151,18 @@ final class TaskStore: ObservableObject {
             }
 
         case .leetcode:
-            // 12:00–18:00, end at 18:00 today
             if (12...18).contains(hour) {
                 return calendar.date(bySettingHour: 18, minute: 0, second: 0, of: today)
             }
             return nil
 
         case .jobs:
-            // 09:00–12:00, end at 12:00 today
             if (9...12).contains(hour) {
                 return calendar.date(bySettingHour: 12, minute: 0, second: 0, of: today)
             }
             return nil
 
         case .shower:
-            // Morning 06–09 → end 09:00; Evening 18–21 → end 21:00
             if (6...9).contains(hour) {
                 return calendar.date(bySettingHour: 9, minute: 0, second: 0, of: today)
             } else if (18...21).contains(hour) {
@@ -172,17 +171,12 @@ final class TaskStore: ObservableObject {
             return nil
 
         case .water:
-            // Active at exact even hours between 08:00–22:00 when minute == 0
-            // Define a short window: the end of the current minute, so it won't reappear within that minute.
-            // If you prefer to block until the next even hour instead, replace with nextEvenHour(at:).
             if (8...22).contains(hour), minute == 0, hour % 2 == 0 {
-                // End = now + 60 seconds (end of this minute)
                 return date.addingTimeInterval(60)
             }
             return nil
 
         case .outside:
-            // 10:00–16:00, end at 16:00 today
             if (10...16).contains(hour) {
                 return calendar.date(bySettingHour: 16, minute: 0, second: 0, of: today)
             }
@@ -195,7 +189,6 @@ final class TaskStore: ObservableObject {
     private func applyRewards(for habit: Habit) {
         guard let animalManager else { return }
 
-        // Apply increases based on the Habit model
         animalManager.animal.status.happiness.value += habit.happinessIncrease
         animalManager.animal.status.health.value    += habit.healthIncrease
         animalManager.animal.status.hunger.value    += habit.hungerIncrease

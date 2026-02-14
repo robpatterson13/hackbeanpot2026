@@ -28,10 +28,10 @@ class ExploreViewController: UIViewController {
     
     private func setupUI() {
         view.backgroundColor = UIColor.systemBackground
-        title = "Explore"
+        title = "Objectives"
         
         // Create and configure the SwiftUI hosting controller to fill the entire screen
-        let swiftUIHostingController = UIHostingController(rootView: TaskListView())
+        let swiftUIHostingController = UIHostingController(rootView: ObjectivesAndTasksView())
         addChild(swiftUIHostingController)
         swiftUIHostingController.view.translatesAutoresizingMaskIntoConstraints = false
         swiftUIHostingController.view.backgroundColor = UIColor.clear
@@ -72,8 +72,10 @@ class ExploreViewController: UIViewController {
 }
 
 // SwiftUI View for Task List - similar to ContentView but focused on tasks
+// Keeping this around in case you still want to use it elsewhere.
+// Not used by ExploreViewController anymore.
 struct TaskListView: View {
-    @StateObject private var store = TaskStore()
+    @StateObject private var store = TaskManager()
     @State private var selectedCompleted: CompletedTask? = nil
     @State private var showCompletedDetail = false
 
@@ -219,7 +221,7 @@ struct CompletedTaskDetailView: View {
                                 .font(.caption)
                                 .foregroundColor(.blue)
                         } icon: {
-                            Image(systemName: "drop.fill")
+                            Image(systemName: "fork.knife")
                                 .foregroundColor(.blue)
                         }
                     }
