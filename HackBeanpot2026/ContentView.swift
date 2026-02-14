@@ -79,7 +79,7 @@ struct ContentView: View {
 
 struct CompletedDetailView: View {
     let completed: CompletedTask
-
+    
     var body: some View {
         NavigationView {
             VStack(spacing: 24) {
@@ -88,11 +88,11 @@ struct CompletedDetailView: View {
                     .scaledToFit()
                     .frame(width: 72, height: 72)
                     .foregroundColor(.accentColor)
-
+                
                 Text(completed.habit.displayName)
                     .font(.title2)
                     .bold()
-
+                
                 VStack(spacing: 8) {
                     HStack {
                         Image(systemName: "calendar")
@@ -106,13 +106,52 @@ struct CompletedDetailView: View {
                 .padding()
                 .background(Color(.secondarySystemBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
-
+                
                 Spacer()
             }
             .padding()
             .navigationTitle("Completed Task")
             .navigationBarTitleDisplayMode(.inline)
         }
+    }
+}
+
+class ContentViewModel {
+    var property: String
+    
+    init() {
+        self.property = "Start"
+    }
+}
+
+// Shared animation manager to persist timer across tab changes
+@Observable
+class AnimationManager {
+    static let shared = AnimationManager()
+    
+    private var timer: Timer?
+    var showState1: Bool = true
+    
+    private init() {
+        startTimer()
+    }
+    
+    private func startTimer() {
+        // Only start timer if it's not already running
+        guard timer == nil else { return }
+        
+        timer = Timer.scheduledTimer(withTimeInterval: 0.7, repeats: true) { _ in
+            self.showState1.toggle()
+        }
+    }
+    
+    func stopTimer() {
+        timer?.invalidate()
+        timer = nil
+    }
+    
+    deinit {
+        stopTimer()
     }
 }
 
@@ -147,7 +186,7 @@ class TestViewModel {
 struct TestView: View {
     @State private var testViewModel: TestViewModel = .init(animalManager: animalManager)
     @State private var yOffset: CGFloat = 0
-    @State private var showState1: Bool = true
+    @State private var animationManager = AnimationManager.shared
     @State private var isBlob: Bool = true
     
     var body: some View {
@@ -158,23 +197,18 @@ struct TestView: View {
             
             VStack {
                 ZStack {
-                    Image(showState1 ? testViewModel.getAnimalImages().0 : testViewModel.getAnimalImages().1)
+                    Image(animationManager.showState1 ? testViewModel.getAnimalImages().0 : testViewModel.getAnimalImages().1)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 250, height: 250)
                         .offset(y: yOffset)
                         .onAppear {
-                            // Image toggle
-                            Timer.scheduledTimer(withTimeInterval: 0.7, repeats: true) { _ in
-                                showState1.toggle()
-                            }
-                            
-                            // Bounce animation
+                            // Only setup bounce animation, timer is handled by AnimationManager
                             withAnimation(
                                 .easeInOut(duration: 3)
                                 .repeatForever(autoreverses: true)
                             ) {
-                                yOffset = -15 // Bounce up 20 points
+                                yOffset = -15 // Bounce up 15 points
                             }
                         }
                 }

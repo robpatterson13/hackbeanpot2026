@@ -23,21 +23,25 @@ class ExploreViewController: UIViewController {
     }
     
     private func setupUI() {
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .clear // Make transparent so shared background shows through
         title = "Explore"
         
         let label = UILabel()
         label.text = "Explore View"
         label.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        label.textColor = .label
+        label.textColor = .white // Change to white since background might be darker
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Add shadow for better readability
+        label.shadowColor = UIColor.black.withAlphaComponent(0.5)
+        label.shadowOffset = CGSize(width: 1, height: 1)
         
         view.addSubview(label)
         
         NSLayoutConstraint.activate([
             label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor)
+            label.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
     }
 }

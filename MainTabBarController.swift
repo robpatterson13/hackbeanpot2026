@@ -15,13 +15,9 @@ class MainTabBarController: UITabBarController {
         super.viewDidLoad()
         print("MainTabBarController: viewDidLoad called")
         
-        // Configure edge-to-edge layout for the tab bar controller
-        edgesForExtendedLayout = .all
-        extendedLayoutIncludesOpaqueBars = true
-        
         setupViewControllers()
         setupCustomTabBar()
-        configureNavigationBars()
+        configureForFullScreenLayout()
         
         // Set background color to make sure view is visible
         view.backgroundColor = .systemBackground
@@ -53,7 +49,7 @@ class MainTabBarController: UITabBarController {
         customTabBar = CustomTabBar(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: 100))
         customTabBar.delegate = self
         customTabBar.translatesAutoresizingMaskIntoConstraints = false
-        customTabBar.backgroundColor = .clear // Temporary color to make it visible
+        customTabBar.backgroundColor = .clear
         
         view.addSubview(customTabBar)
         
@@ -67,16 +63,51 @@ class MainTabBarController: UITabBarController {
         print("MainTabBarController: Custom tab bar setup complete")
     }
     
-    private func configureNavigationBars() {
-        print("MainTabBarController: Configuring navigation bars to ignore safe area")
+    private func configureForFullScreenLayout() {
+        print("MainTabBarController: Configuring full screen layout")
+        
+        // Configure the tab bar controller to extend edge-to-edge
+        edgesForExtendedLayout = .all
+        extendedLayoutIncludesOpaqueBars = true
+        automaticallyAdjustsScrollViewInsets = false
         
         guard let navControllers = viewControllers as? [UINavigationController] else { return }
         
         for navController in navControllers {
-            // Configure the navigation controller to extend edge-to-edge
+            // Configure each navigation controller for full screen layout
             navController.edgesForExtendedLayout = .all
             navController.extendedLayoutIncludesOpaqueBars = true
             navController.automaticallyAdjustsScrollViewInsets = false
+            
+            // Configure the root view controller for edge-to-edge layout
+            if let rootViewController = navController.topViewController {
+                configureViewControllerForFullScreen(rootViewController)
+            }
+        }
+    }
+    
+    private func configureViewControllerForFullScreen(_ viewController: UIViewController) {
+        // Ensure each view controller extends edge-to-edge
+        viewController.edgesForExtendedLayout = .all
+        viewController.extendedLayoutIncludesOpaqueBars = true
+        viewController.automaticallyAdjustsScrollViewInsets = false
+        
+        // Make sure the view extends to the full bounds
+        viewController.view.frame = view.bounds
+        viewController.additionalSafeAreaInsets = .zero
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        // Ensure all child views extend to full screen bounds
+        guard let navControllers = viewControllers as? [UINavigationController] else { return }
+        
+        for navController in navControllers {
+            navController.view.frame = view.bounds
+            if let rootViewController = navController.topViewController {
+                rootViewController.view.frame = navController.view.bounds
+            }
         }
     }
 }

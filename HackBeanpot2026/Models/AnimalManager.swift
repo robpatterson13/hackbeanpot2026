@@ -19,7 +19,7 @@ final class AnimalManager {
     private(set) var selectedBackground: BackgroundType?
     private(set) var purchaseHistory: [PurchaseHistoryEntry] = []
     
-    var taskManager: TaskStore
+    var taskManager: TaskStore = .init()
 
     init(animal: Animal, shop: Shop, coins: Int = 0) {
         self.animal = animal
@@ -64,10 +64,6 @@ final class AnimalManager {
                 throw PurchaseError.invalidUpgrade
             }
             animal.type = upgrade.asAnimalType
-
-        case .background(let bg):
-            selectedBackground = bg
-            apply(levelIncrease: item.increase)
 
         default:
             apply(levelIncrease: item.increase)
