@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 // ViewModel that bridges the UI to AnimalManager and the Shop catalog
 final class ShopViewModel: ObservableObject {
@@ -122,9 +123,6 @@ struct ShopItemCard: View {
                     .fill(Color(.secondarySystemBackground))
                 
                 contentImage
-                    .resizable()
-                    .scaledToFit()
-                    .padding(16)
             }
             .frame(height: 110)
             
@@ -159,15 +157,29 @@ struct ShopItemCard: View {
                 .resizable()
                 .scaledToFill()
                 .clipShape(RoundedRectangle(cornerRadius: 8))
+                .padding(16)
         default:
             Image(systemName: item.iconSystemName ?? "bag")
                 .resizable()
                 .scaledToFit()
                 .foregroundColor(.accentColor)
+                .padding(16)
         }
     }
 }
 
 #Preview("ShopView") {
-    NavigationView { ShopView(animalManager: AnimalManager()) }
+    // Provide minimal, placeholder dependencies for preview
+    let previewAnimal = Animal(
+        type: .cat,  // use an AnimalType case, not a string
+        status: .init(
+            happiness: .init(value: 100),
+            health: .init(value: 100),
+            hunger: .init(value: 100)
+        )
+    )
+    let previewShop = Shop()
+    let manager = AnimalManager(animal: previewAnimal, shop: previewShop)
+    NavigationView { ShopView(animalManager: manager) }
 }
+

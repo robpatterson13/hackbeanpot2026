@@ -1,13 +1,14 @@
 //
-//  ProfileViewController.swift
+//  ShopViewController.swift
 //  HackBeanpot2026
 //
 //  Created by Rob Patterson on 2/14/26.
 //
 
 import UIKit
+import SwiftUI
 
-class ProfileViewController: UIViewController {
+class ShopViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -16,32 +17,27 @@ class ProfileViewController: UIViewController {
     }
     
     private func configureForEdgeToEdgeLayout() {
-        // Configure this view controller for edge-to-edge layout
         edgesForExtendedLayout = .all
         extendedLayoutIncludesOpaqueBars = true
-        automaticallyAdjustsScrollViewInsets = false
     }
     
     private func setupUI() {
-        view.backgroundColor = .clear // Make transparent so shared background shows through
-        title = "Profile"
+        view.backgroundColor = .clear
+        title = "Shop"
         
-        let label = UILabel()
-        label.text = "Profile View"
-        label.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        label.textColor = .white // Change to white since background might be darker
-        label.textAlignment = .center
-        label.translatesAutoresizingMaskIntoConstraints = false
-        
-        // Add shadow for better readability
-        label.shadowColor = UIColor.black.withAlphaComponent(0.5)
-        label.shadowOffset = CGSize(width: 1, height: 1)
-        
-        view.addSubview(label)
+        // Embed SwiftUI ShopView
+        let hosting = UIHostingController(rootView: ShopView(animalManager: animalManager))
+        addChild(hosting)
+        hosting.view.translatesAutoresizingMaskIntoConstraints = false
+        hosting.view.backgroundColor = .clear
+        view.addSubview(hosting.view)
+        hosting.didMove(toParent: self)
         
         NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+            hosting.view.topAnchor.constraint(equalTo: view.topAnchor),
+            hosting.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            hosting.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            hosting.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
 }
