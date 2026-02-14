@@ -16,6 +16,7 @@ enum Habit: CaseIterable {
     enum Verification {
         case confirmation(prompt: String)
         case screenshot(prompt: String)
+        case location(prompt: String)
     }
 
     // Tunable values: adjust per your game balance
@@ -90,7 +91,7 @@ enum Habit: CaseIterable {
         case .water:
             return .confirmation(prompt: "Did you drink water today?")
         case .outside:
-            return .confirmation(prompt: "Did you go outside today?")
+            return .location(prompt: "Go outside for at least 5 minutes to complete this task.")
         }
     }
 }
