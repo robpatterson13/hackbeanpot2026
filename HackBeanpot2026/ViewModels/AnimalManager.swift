@@ -8,6 +8,21 @@
 import Foundation
 import Combine
 
+// MARK: - Purchase Record
+struct PurchaseRecord: Codable, Identifiable {
+    let id: UUID
+    let item: ShopItem
+    let timestamp: Date
+    let coinsCost: Int
+    
+    init(item: ShopItem, timestamp: Date = Date()) {
+        self.id = UUID()
+        self.item = item
+        self.timestamp = timestamp
+        self.coinsCost = item.cost
+    }
+}
+
 final class AnimalManager: ObservableObject {
     
     // MARK: - Singleton
@@ -17,6 +32,7 @@ final class AnimalManager: ObservableObject {
     private let shop: Shop
     @Published private(set) var coins: Int
     let taskManager: TaskStore
+    @Published private(set) var purchaseHistory: [PurchaseRecord] = []
     
     // MARK: - UserDefaults Keys
     private enum UserDefaultsKeys {
@@ -25,6 +41,7 @@ final class AnimalManager: ObservableObject {
         static let health = "health"
         static let hunger = "hunger"
         static let coins = "coins"
+        static let purchaseHistory = "purchaseHistory"
     }
 
     private init() {
@@ -37,6 +54,14 @@ final class AnimalManager: ObservableObject {
         let savedHealth = UserDefaults.standard.object(forKey: UserDefaultsKeys.health) as? Int ?? 100
         let savedHunger = UserDefaults.standard.object(forKey: UserDefaultsKeys.hunger) as? Int ?? 100
         let savedCoins = UserDefaults.standard.object(forKey: UserDefaultsKeys.coins) as? Int ?? 0
+        
+        // Load purchase history
+        if let purchaseHistoryData = UserDefaults.standard.data(forKey: UserDefaultsKeys.purchaseHistory),
+           let decodedHistory = try? JSONDecoder().decode([PurchaseRecord].self, from: purchaseHistoryData) {
+            self.purchaseHistory = decodedHistory
+        } else {
+            self.purchaseHistory = []
+        }
         
         // Create animal from saved data
         let animalType = AnimalType.fromString(savedAnimalType)
@@ -57,6 +82,7 @@ final class AnimalManager: ObservableObject {
         self.shop = shop
         self.taskManager = taskManager
         self.coins = coins
+        self.purchaseHistory = []
         
         // Set up the bidirectional relationship
         self.taskManager.animalManager = self
@@ -118,6 +144,10 @@ final class AnimalManager: ObservableObject {
         coins -= item.cost
         clampStatus()
         
+        // Record the purchase in history
+        let purchaseRecord = PurchaseRecord(item: item)
+        purchaseHistory.append(purchaseRecord)
+        
         // Save the updated state
         saveState()
     }
@@ -175,10 +205,45 @@ final class AnimalManager: ObservableObject {
         UserDefaults.standard.set(animal.status.health.value, forKey: UserDefaultsKeys.health)
         UserDefaults.standard.set(animal.status.hunger.value, forKey: UserDefaultsKeys.hunger)
         UserDefaults.standard.set(coins, forKey: UserDefaultsKeys.coins)
+        
+        // Save purchase history
+        if let historyData = try? JSONEncoder().encode(purchaseHistory) {
+            UserDefaults.standard.set(historyData, forKey: UserDefaultsKeys.purchaseHistory)
+        }
     }
     
     /// Manually save state (can be called externally)
     func save() {
+        saveState()
+    }
+    
+    // MARK: - Purchase History Methods
+    
+    /// Returns the total number of purchases made
+    var totalPurchases: Int {
+        purchaseHistory.count
+    }
+    
+    /// Returns the total coins spent on all purchases
+    var totalCoinsSpent: Int {
+        purchaseHistory.reduce(0) { $0 + $1.coinsCost }
+    }
+    
+    /// Returns purchase history filtered by a specific date range
+    func purchaseHistory(from startDate: Date, to endDate: Date) -> [PurchaseRecord] {
+        purchaseHistory.filter { purchase in
+            purchase.timestamp >= startDate && purchase.timestamp <= endDate
+        }
+    }
+    
+    /// Returns the most recent purchases (limited by count)
+    func recentPurchases(limit: Int = 10) -> [PurchaseRecord] {
+        Array(purchaseHistory.suffix(limit))
+    }
+    
+    /// Clears all purchase history (for testing or reset purposes)
+    func clearPurchaseHistory() {
+        purchaseHistory.removeAll()
         saveState()
     }
 }
