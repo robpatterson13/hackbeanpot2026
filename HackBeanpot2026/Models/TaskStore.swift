@@ -29,6 +29,7 @@ final class TaskStore: ObservableObject {
     @Published private(set) var tasks: [HabitTask] = []
     @Published private(set) var completedTasks: [CompletedTask] = []
 
+    weak var animalManager: AnimalManager?
     private var timerCancellable: AnyCancellable?
     private let calendar: Calendar
     private let generationInterval: TimeInterval = 60

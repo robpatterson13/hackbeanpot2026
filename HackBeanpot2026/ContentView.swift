@@ -1,12 +1,14 @@
 //
-//  ContentView.swift
+//  ContentViewModel.swift
 //  HackBeanpot2026
 //
 //  Created by Rob Patterson on 2/13/26.
 //
 
-import SwiftUI
+import Foundation
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 struct ContentView: View {
 
     @StateObject private var store = TaskStore()
@@ -112,5 +114,17 @@ struct CompletedDetailView: View {
             .navigationTitle("Completed Task")
             .navigationBarTitleDisplayMode(.inline)
         }
+=======
+=======
+>>>>>>> Stashed changes
+class ContentViewModel {
+    var property: String
+    
+    init() {
+        self.property = "Start"
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
     }
 }
