@@ -55,7 +55,6 @@ class HomeViewModel {
 
 struct HomeView: View {
     @State private var homeViewModel: HomeViewModel = .init(animalManager: AnimalManager.shared)
-    @State private var yOffset: CGFloat = 0
     @State private var animationManager = AnimationManager.shared
     @State private var animalManager = AnimalManager.shared
     @State private var isBlob: Bool = true
@@ -136,76 +135,49 @@ struct HomeView: View {
                 
                 Spacer()
                 
-                // Dev Mode Toggle Button (hidden until unlocked)
-                if devModeUnlocked {
-                    HStack {
-                        Spacer()
-                        Button("Dev Mode") {
-                            showDevMode.toggle()
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(.ultraThinMaterial)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                        .padding(.trailing)
-                        .popover(isPresented: $showDevMode, arrowEdge: .top) {
-                            DevModePopoverContent(
-                                showResetAlert: $showResetAlert,
-                                resetType: $resetType,
-                                showCoinSetter: $showCoinSetter,
-                                showTaskAssigner: $showTaskAssigner
-                            )
-                        }
-                    }
-                    .padding(.top)
-                }
-                
-                Spacer()
-                
-                // Animal + Accessories share the same animated vertical offset
-                ZStack {
-                    Image(animationManager.showState1 ? homeViewModel.getAnimalImages().0 : homeViewModel.getAnimalImages().1)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 250, height: 250)
-                        .offset(y: yOffset)
-                        .onAppear {
-                            withAnimation(
-                                .easeInOut(duration: 3)
-                                    .repeatForever(autoreverses: true)
-                            ) {
-                                yOffset = -15
-                            }
-                        }
-                        .onTapGesture {
-                            // Secret dev mode unlock: tap animal 7 times quickly
-                            tapCount += 1
-                            if tapCount >= 7 {
-                                devModeUnlocked = true
-                                tapCount = 0
-                            }
-                            
-                            // Reset tap count after 2 seconds of no tapping
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                if tapCount < 7 {
+                // Animal + accessories move together using a time-based bobbing offset that doesn't depend on view state
+                TimelineView(.animation) { context in
+                    let period: TimeInterval = 6.0
+                    let amplitude: CGFloat = 15
+                    let elapsed = context.date.timeIntervalSinceReferenceDate
+                    let phase = (elapsed.truncatingRemainder(dividingBy: period) / period) * 2 * .pi
+                    // Start at -amplitude to match previous initial offset and bob smoothly
+                    let bob = -amplitude * CGFloat(cos(phase))
+                    
+                    ZStack {
+                        Image(animationManager.showState1 ? homeViewModel.getAnimalImages().0 : homeViewModel.getAnimalImages().1)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 250, height: 250)
+                            .onTapGesture {
+                                // Secret dev mode unlock: tap animal 7 times quickly
+                                tapCount += 1
+                                if tapCount >= 7 {
+                                    devModeUnlocked = true
                                     tapCount = 0
                                 }
+                                
+                                // Reset tap count after 2 seconds of no tapping
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    if tapCount < 7 {
+                                        tapCount = 0
+                                    }
+                                }
+                            }
+                        
+                        // Overlay all equipped accessories with per-animal positioning
+                        ForEach(equippedAccessories, id: \.self) { accessory in
+                            if let pos = accessoryManager.getAccessoryPosition(for: accessory, animalType: currentAnimalType) {
+                                Image(accessory.rawValue)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: accessoryImageSize(for: accessory), height: accessoryImageSize(for: accessory))
+                                    // Base placement relative to animal center
+                                    .offset(x: pos.xOffset, y: pos.yOffset)
                             }
                         }
-                    
-                    // Overlay all equipped accessories with per-animal positioning and bobbing
-                    ForEach(equippedAccessories, id: \.self) { accessory in
-                        if let pos = accessoryManager.getAccessoryPosition(for: accessory, animalType: currentAnimalType) {
-                            Image(accessory.rawValue)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: accessoryImageSize(for: accessory), height: accessoryImageSize(for: accessory))
-                                // Base placement relative to animal center
-                                .offset(x: pos.xOffset, y: pos.yOffset)
-                                // Apply the same animated vertical motion
-                                .offset(y: yOffset)
-                        }
                     }
+                    .offset(y: bob)
                 }
                 
                 Spacer()
@@ -604,3 +576,4 @@ private struct StatBar: View {
         .frame(height: 24)
     }
 }
+
