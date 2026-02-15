@@ -6,7 +6,7 @@ final class ShopViewModel: ObservableObject {
     @Published var selectedCategory: ShopCategory = .upgrades
     @Published private(set) var coins: Int
     
-    private let animalManager: AnimalManager
+    let animalManager: AnimalManager
     private let shop = Shop() // Catalog of items
     
     init(animalManager: AnimalManager) {
@@ -29,6 +29,8 @@ final class ShopViewModel: ObservableObject {
         shop.items.filter { $0.category == selectedCategory }
     }
     
+    var allItems: [ShopItem] { shop.items }
+    
     func canBuy(_ item: ShopItem) -> Bool {
         animalManager.canBuy(item)
     }
@@ -44,60 +46,50 @@ struct ShopView: View {
     @StateObject private var viewModel: ShopViewModel
     @State private var errorMessage: String? = nil
     
-    private let columns = [
-        GridItem(.adaptive(minimum: 150), spacing: 16)
-    ]
-    
     init(animalManager: AnimalManager) {
         _viewModel = StateObject(wrappedValue: ShopViewModel(animalManager: animalManager))
     }
     
     var body: some View {
         ZStack {
-            // Use a subtle background that works with both light/dark
-            Color(.systemGroupedBackground)
+            Image("shelves")
+                .resizable()
+                .scaledToFill()
                 .ignoresSafeArea()
             
-            VStack(spacing: 16) {
-                // Coins header
-                HStack {
-                    Label("Coins: \(viewModel.coins)", systemImage: "creditcard")
-                        .font(.headline)
-                        .padding(8)
-                        .background(.ultraThinMaterial, in: Capsule())
-                    Spacer()
-                }
-                .padding(.horizontal)
-                
-                // Category picker
-                Picker("Category", selection: $viewModel.selectedCategory) {
-                    ForEach(viewModel.categories, id: \.self) { cat in
-                        Text(viewModel.title(for: cat)).tag(cat)
+            ZStack {
+                // Shelves rows overlay across the whole screen
+                GeometryReader { proxy in
+                    // Adjust these to align rows with the planks in your shelves image
+                    let topInset: CGFloat = 40
+                    let bottomInset: CGFloat = 70
+                    let interShelfSpacing: CGFloat = 8
+                    let available = proxy.size.height - topInset - bottomInset - interShelfSpacing * 3
+                    let shelfHeight = max(44, available / 4)
+
+                    VStack(spacing: interShelfSpacing) {
+                        shelfRow(items: viewModel.allItems.filter { $0.category == .upgrades }, shelfHeight: shelfHeight)
+                        shelfRow(items: viewModel.allItems.filter { $0.category == .food }, shelfHeight: shelfHeight)
+                        shelfRow(items: viewModel.allItems.filter { $0.category == .accessories }, shelfHeight: shelfHeight)
+                        shelfRow(items: viewModel.allItems.filter { $0.category == .backgrounds }, shelfHeight: shelfHeight)
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .padding(.top, topInset)
+                    .padding(.bottom, bottomInset)
                 }
-                .pickerStyle(.segmented)
-                .padding(.horizontal)
-                
-                // Items grid
-                ScrollView {
-                    LazyVGrid(columns: columns, spacing: 16) {
-                        ForEach(Array(viewModel.filteredItems.enumerated()), id: \.offset) { _, item in
-                            ShopItemCard(item: item,
-                                         canBuy: viewModel.canBuy(item)) {
-                                do {
-                                    try viewModel.buy(item)
-                                } catch AnimalManager.PurchaseError.insufficientFunds {
-                                    errorMessage = "Not enough coins."
-                                } catch AnimalManager.PurchaseError.invalidUpgrade {
-                                    errorMessage = "This upgrade isn't unlocked yet."
-                                } catch {
-                                    errorMessage = "Couldn't complete purchase."
-                                }
-                            }
-                        }
+
+                // Coins header overlay on top
+                VStack {
+                    HStack {
+                        Label("Coins: \(viewModel.coins)", systemImage: "creditcard")
+                            .font(.headline)
+                            .padding(8)
+                            .background(.ultraThinMaterial, in: Capsule())
+                        Spacer()
                     }
                     .padding(.horizontal)
-                    .padding(.bottom, 16)
+                    .padding(.top, 8)
+                    Spacer()
                 }
             }
         }
@@ -108,15 +100,53 @@ struct ShopView: View {
             Text(errorMessage ?? "")
         })
     }
+    
+    @ViewBuilder
+    private func shelfRow(items: [ShopItem], shelfHeight: CGFloat) -> some View {
+        // Horizontal items scroller over the shelves background
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(Array(items.enumerated()), id: \.offset) { _, item in
+                    let cardWidth = max(100, min(140, shelfHeight * 1.3))
+                    ShopItemCard(item: item,
+                                 canBuy: viewModel.canBuy(item),
+                                 onBuy: {
+                                     do {
+                                         try viewModel.buy(item)
+                                     } catch AnimalManager.PurchaseError.insufficientFunds {
+                                         errorMessage = "Not enough coins."
+                                     } catch AnimalManager.PurchaseError.invalidUpgrade {
+                                         errorMessage = "This upgrade isn't unlocked yet."
+                                     } catch {
+                                         errorMessage = "Couldn't complete purchase."
+                                     }
+                                 },
+                                 compact: true)
+                    .frame(width: cardWidth, height: shelfHeight)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+        }
+        .frame(height: shelfHeight)
+    }
 }
 
 struct ShopItemCard: View {
     let item: ShopItem
     let canBuy: Bool
     let onBuy: () -> Void
+    let compact: Bool
+
+    init(item: ShopItem, canBuy: Bool, onBuy: @escaping () -> Void, compact: Bool = false) {
+        self.item = item
+        self.canBuy = canBuy
+        self.onBuy = onBuy
+        self.compact = compact
+    }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: compact ? 6 : 10) {
             // Image / Icon
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
@@ -124,12 +154,13 @@ struct ShopItemCard: View {
                 
                 contentImage
             }
-            .frame(height: 110)
+            .frame(height: compact ? 50 : 110)
             
             // Title and price
             Text(item.displayName)
-                .font(.headline)
+                .font(compact ? .caption : .headline)
                 .lineLimit(1)
+                .minimumScaleFactor(0.8)
             
             HStack {
                 Image(systemName: "creditcard")
@@ -137,11 +168,12 @@ struct ShopItemCard: View {
                 Spacer()
                 Button("Buy", action: onBuy)
                     .buttonStyle(.borderedProminent)
+                    .controlSize(compact ? .small : .regular)
                     .disabled(!canBuy)
             }
-            .font(.subheadline)
+            .font(compact ? .caption2 : .subheadline)
         }
-        .padding(12)
+        .padding(compact ? 6 : 12)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.systemBackground))
@@ -157,13 +189,13 @@ struct ShopItemCard: View {
                 .resizable()
                 .scaledToFill()
                 .clipShape(RoundedRectangle(cornerRadius: 8))
-                .padding(16)
+                .padding(compact ? 8 : 16)
         default:
             Image(systemName: item.iconSystemName ?? "bag")
                 .resizable()
                 .scaledToFit()
                 .foregroundColor(.accentColor)
-                .padding(16)
+                .padding(compact ? 8 : 16)
         }
     }
 }
