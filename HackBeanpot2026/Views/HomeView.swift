@@ -70,6 +70,7 @@ struct HomeView: View {
     @State private var showInventory: Bool = false
     @State private var showStatDecaySettings: Bool = false
     @State private var showGameOver: Bool = false
+    @State private var yOffset: CGFloat = 0
     
     // Accessory positioning helper
     private let accessoryManager = AnimalAccessoryManager()
@@ -84,7 +85,7 @@ struct HomeView: View {
     }
     
     private var animal: Animal {
-        AnimalManager.shared.animal
+        animalManager.animal
     }
     
     private var isGameOver: Bool {
@@ -95,17 +96,12 @@ struct HomeView: View {
     
     // Convenience to get current animal type
     private var currentAnimalType: AnimalType {
-        AnimalManager.shared.animal.type
+        animalManager.animal.type
     }
     
-    // Equipped accessories from inventory
-    private var equippedAccessories: [AccessoryType] {
-        AnimalManager.shared.inventoryManager
-            .equippedItems
-            .compactMap { item in
-                if case .accessory(let type) = item.itemType { return type }
-                return nil
-            }
+    // Equipped accessory from inventory (single)
+    private var equippedAccessory: AccessoryType? {
+        animalManager.currentAccessory
     }
     
     var body: some View {
@@ -189,52 +185,53 @@ struct HomeView: View {
                     .padding(.top)
                 }
                 
-                // Animal + accessories move together using a time-based bobbing offset that doesn't depend on view state
-                TimelineView(.animation) { context in
-                    let period: TimeInterval = 6.0
-                    let amplitude: CGFloat = 15
-                    let elapsed = context.date.timeIntervalSinceReferenceDate
-                    let phase = (elapsed.truncatingRemainder(dividingBy: period) / period) * 2 * .pi
-                    // Start at -amplitude to match previous initial offset and bob smoothly
-                    let bob = -amplitude * CGFloat(cos(phase))
-                    
-                    ZStack {
-                        Image(animationManager.showState1 ? homeViewModel.getAnimalImages().0 : homeViewModel.getAnimalImages().1)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 250, height: 250)
-                            .onTapGesture {
-                                // Secret dev mode unlock: tap animal 7 times quickly
-                                tapCount += 1
-                                if tapCount >= 7 {
-                                    devModeUnlocked = true
+                // Animal + accessories share the same animated vertical offset
+                ZStack {
+                    Image(animationManager.showState1 ? homeViewModel.getAnimalImages().0 : homeViewModel.getAnimalImages().1)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 250, height: 250)
+                        .onTapGesture {
+                            // Secret dev mode unlock: tap animal 7 times quickly
+                            tapCount += 1
+                            if tapCount >= 7 {
+                                devModeUnlocked = true
+                                tapCount = 0
+                            }
+                            
+                            // Reset tap count after 2 seconds of no tapping
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                if tapCount < 7 {
                                     tapCount = 0
                                 }
-                                
-                                // Reset tap count after 2 seconds of no tapping
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                    if tapCount < 7 {
-                                        tapCount = 0
-                                    }
-                                }
-                            }
-                        
-                        // Overlay all equipped accessories with per-animal positioning
-                        ForEach(equippedAccessories, id: \.self) { accessory in
-                            if let pos = accessoryManager.getAccessoryPosition(for: accessory, animalType: currentAnimalType) {
-                                Image(accessory.rawValue)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(
-                                        width: pos.width ?? accessoryImageSize(for: accessory),
-                                        height: pos.width ?? accessoryImageSize(for: accessory)
-                                    )
-                                    // Base placement relative to animal center
-                                    .offset(x: pos.xOffset, y: pos.yOffset)
                             }
                         }
+                    
+                    // Overlay the single equipped accessory with per-animal positioning
+                    if let accessory = equippedAccessory,
+                       let pos = accessoryManager.getAccessoryPosition(for: accessory, animalType: currentAnimalType) {
+                        Image(accessory.rawValue)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(
+                                width: pos.width ?? accessoryImageSize(for: accessory),
+                                height: pos.width ?? accessoryImageSize(for: accessory)
+                            )
+                            // Base placement relative to animal center
+                            .offset(x: pos.xOffset, y: pos.yOffset)
+                            .allowsHitTesting(false)
                     }
-                    .offset(y: bob)
+                }
+                .offset(y: yOffset)
+                .id(currentAnimalType)
+                .onAppear {
+                    startBobbing()
+                }
+                .onChange(of: equippedAccessory) { _, _ in
+                    startBobbing()
+                }
+                .onChange(of: currentAnimalType) { _, _ in
+                    startBobbing()
                 }
                 
                 Spacer()
@@ -307,6 +304,17 @@ struct HomeView: View {
         case .fedora: return 100
         case .sunglasses: return 90
         case .tie, .bowtie: return 80
+        }
+    }
+    
+    private func startBobbing() {
+        // Reset to a known baseline and start a repeating animation so new overlays pick it up
+        yOffset = 0
+        withAnimation(
+            .easeInOut(duration: 6).speed(2)
+                .repeatForever(autoreverses: true)
+        ) {
+            yOffset = -15
         }
     }
     
@@ -998,3 +1006,4 @@ private extension UIWindowScene {
         return self.windows.first { $0.isKeyWindow }
     }
 }
+

@@ -57,6 +57,15 @@ final class AnimalManager {
         selectedBackground ?? .livingRoom
     }
     
+    // Convenience: currently equipped accessory (only one accessory can be equipped at a time)
+    var currentAccessory: AccessoryType? {
+        if let item = inventoryManager.equippedItem(for: .accessories),
+           case .accessory(let type) = item.itemType {
+            return type
+        }
+        return nil
+    }
+    
     func setSelectedBackground(_ background: BackgroundType) {
         selectedBackground = background
     }
@@ -402,6 +411,8 @@ final class AnimalManager {
         if oldHealth != animal.status.health.value || 
            oldHappiness != animal.status.happiness.value || 
            oldHunger != animal.status.hunger.value {
+            // Notify observers that the `animal` property changed so views refresh
+            self.animal = self.animal
             saveState()
             
             // Debug logging
