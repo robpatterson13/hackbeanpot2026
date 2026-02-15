@@ -10,3 +10,5 @@ Basic self-care (sleep, showers, going outside) became optional when deadlines l
 We realized that extrinsic motivation (interviews, deadlines, parental expectations) wasn't working. What if we could build an app that creates intrinsic motivation within users for something they actually care about?
 
 HabitHeap is an authentic, self-aware app built by CS majors for CS majors to make us want to do the things we know we should do.
+
+See demo here: https://devpost.com/software/habitheap
