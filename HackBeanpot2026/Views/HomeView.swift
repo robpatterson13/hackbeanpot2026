@@ -89,31 +89,48 @@ struct HomeView: View {
                 .ignoresSafeArea()
             
             VStack {
-                HStack {
-                    VStack(spacing: 10) {
-                        if let animal {
-                            StatBar(value: Double(animal.status.health.value),
-                                    color: .red,
-                                    icon: Image("health"),
-                                    iconWidth: 40)
-                            
-                            StatBar(value: Double(animal.status.hunger.value),
-                                    color: .blue,
-                                    icon: Image("hunger"),
-                                    iconWidth: 40)
-                            
-                            StatBar(value: Double(animal.status.happiness.value),
-                                    color: .orange,
-                                    icon: Image("happiness"),
-                                    iconWidth: 30)
+                VStack(spacing: 8) {
+                    HStack {
+                        VStack(spacing: 10) {
+                            if let animal {
+                                StatBar(value: Double(animal.status.health.value),
+                                        color: .red,
+                                        icon: Image("health"),
+                                        iconWidth: 40)
+                                
+                                StatBar(value: Double(animal.status.hunger.value),
+                                        color: .blue,
+                                        icon: Image("hunger"),
+                                        iconWidth: 40)
+                                
+                                StatBar(value: Double(animal.status.happiness.value),
+                                        color: .orange,
+                                        icon: Image("happiness"),
+                                        iconWidth: 30)
+                            }
+                        }
+                        .frame(width: 315)
+                        .padding(12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(red: 1.0, green: 1.0, blue: 1.0, opacity: 0.5))
+                        )
+                    }
+                    .padding(.top, 12)
+                    
+                    // Inventory Button positioned below the health bars
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            showInventory = true
+                        }) {
+                            Image("inventory")
+                                .resizable()
+                                .frame(width: 80, height: 80)
                         }
                     }
-                    .frame(width: 315)
-                    .padding(12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(red: 1.0, green: 1.0, blue: 1.0, opacity: 0.5))
-                    )
+                    .padding(.trailing, 30)
+                    .padding(.top, 12)
                 }
                 
                 Spacer()
@@ -178,26 +195,6 @@ struct HomeView: View {
                 Spacer()
             }
                     
-            // Inventory Button
-            VStack {
-                Button(action: {
-                    showInventory = true
-                }) {
-                    Image(systemName: "bag.fill")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(.ultraThinMaterial)
-                        .clipShape(Circle())
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                        )
-                }
-                Spacer()
-            }
-            .padding(.trailing, 16)
-            
             // Coin Setter Overlay
             if showCoinSetter {
                 CoinSetterOverlay(
@@ -228,6 +225,7 @@ struct HomeView: View {
         } message: {
             Text("Are you sure you want to reset \(resetType?.rawValue.lowercased() ?? "")? This action cannot be undone.")
         }
+        .zIndex(showInventory ? 1000 : 0)
     }
     
     private func performReset() {
@@ -490,27 +488,39 @@ struct InventoryOverlay: View {
     var body: some View {
         ZStack {
             Color.black.opacity(0.5)
-                .ignoresSafeArea()
+                .ignoresSafeArea(.all)
                 .onTapGesture {
                     isPresented = false
                 }
             
-            NavigationView {
-                InventoryView(animalManager: AnimalManager.shared)
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button("Close") {
-                                isPresented = false
-                            }
-                        }
+            VStack(spacing: 0) {
+                // Custom header
+                HStack {
+                    Text("Inventory")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                    
+                    Spacer()
+                    
+                    Button("Close") {
+                        isPresented = false
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(.quaternary)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .padding()
+                .background(.regularMaterial)
+                
+                // Inventory content
+                InventoryView(animalManager: AnimalManager.shared)
+                    .background(.regularMaterial)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(.regularMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 20))
             .padding(20)
         }
+        .zIndex(999)
     }
 }
 

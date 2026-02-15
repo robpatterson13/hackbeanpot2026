@@ -101,6 +101,7 @@ class CustomTabButton: UIButton {
     private let tabItem: TabItem
     private var iconImageView: UIImageView!
     private var customTitleLabel: UILabel!
+    private var isCurrentlySelected: Bool = false
     
     init(tabItem: TabItem) {
         self.tabItem = tabItem
@@ -146,17 +147,18 @@ class CustomTabButton: UIButton {
     }
     
     func setSelected(_ selected: Bool) {
+        isCurrentlySelected = selected
         UIView.animate(withDuration: 0.2, delay: 0, options: [.curveEaseInOut], animations: {
             if selected {
                 self.iconImageView.image = UIImage(named: self.tabItem.icon)
                 self.iconImageView.tintColor = .systemBlue
                 self.customTitleLabel.textColor = .systemBlue
-                self.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
+                self.iconImageView.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
             } else {
                 self.iconImageView.image = UIImage(named: self.tabItem.icon)
                 self.iconImageView.tintColor = .systemGray
                 self.customTitleLabel.textColor = .systemGray
-                self.transform = .identity
+                self.iconImageView.transform = .identity
             }
         })
     }
@@ -164,17 +166,17 @@ class CustomTabButton: UIButton {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesBegan(touches, with: event)
         UIView.animate(withDuration: 0.1) {
-            self.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+            self.iconImageView.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
         }
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesEnded(touches, with: event)
         UIView.animate(withDuration: 0.1) {
-            if self.iconImageView.tintColor == .systemBlue {
-                self.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
+            if self.isCurrentlySelected {
+                self.iconImageView.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
             } else {
-                self.transform = .identity
+                self.iconImageView.transform = .identity
             }
         }
     }
@@ -182,10 +184,10 @@ class CustomTabButton: UIButton {
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesCancelled(touches, with: event)
         UIView.animate(withDuration: 0.1) {
-            if self.iconImageView.tintColor == .systemBlue {
-                self.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
+            if self.isCurrentlySelected {
+                self.iconImageView.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
             } else {
-                self.transform = .identity
+                self.iconImageView.transform = .identity
             }
         }
     }

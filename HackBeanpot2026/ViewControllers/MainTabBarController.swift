@@ -25,18 +25,15 @@ class MainTabBarController: UITabBarController {
     
     private func setupViewControllers() {
         let homeVC = HomeViewController()
-        let homeNav = UINavigationController(rootViewController: homeVC)
-        homeNav.tabBarItem = UITabBarItem(title: "Home", image: UIImage(systemName: "house"), tag: 0)
+        homeVC.tabBarItem = UITabBarItem(title: "Home", image: UIImage(systemName: "house"), tag: 0)
         
         let exploreVC = ExploreViewController()
-        let exploreNav = UINavigationController(rootViewController: exploreVC)
-        exploreNav.tabBarItem = UITabBarItem(title: "Explore", image: UIImage(systemName: "magnifyingglass"), tag: 1)
+        exploreVC.tabBarItem = UITabBarItem(title: "Explore", image: UIImage(systemName: "magnifyingglass"), tag: 1)
         
         let shopVC = ShopViewController()
-        let shopNav = UINavigationController(rootViewController: shopVC)
-        shopNav.tabBarItem = UITabBarItem(title: "Shop", image: UIImage(systemName: "cart"), tag: 2)
+        shopVC.tabBarItem = UITabBarItem(title: "Shop", image: UIImage(systemName: "cart"), tag: 2)
         
-        viewControllers = [homeNav, exploreNav, shopNav] 
+        viewControllers = [homeVC, exploreVC, shopVC] 
     }
     
     private func setupCustomTabBar() {
@@ -71,18 +68,11 @@ class MainTabBarController: UITabBarController {
         extendedLayoutIncludesOpaqueBars = true
         automaticallyAdjustsScrollViewInsets = false
         
-        guard let navControllers = viewControllers as? [UINavigationController] else { return }
+        guard let viewControllers = viewControllers else { return }
         
-        for navController in navControllers {
-            // Configure each navigation controller for full screen layout
-            navController.edgesForExtendedLayout = .all
-            navController.extendedLayoutIncludesOpaqueBars = true
-            navController.automaticallyAdjustsScrollViewInsets = false
-            
-            // Configure the root view controller for edge-to-edge layout
-            if let rootViewController = navController.topViewController {
-                configureViewControllerForFullScreen(rootViewController)
-            }
+        for viewController in viewControllers {
+            // Configure each view controller for full screen layout
+            configureViewControllerForFullScreen(viewController)
         }
     }
     
@@ -101,13 +91,10 @@ class MainTabBarController: UITabBarController {
         super.viewDidLayoutSubviews()
         
         // Ensure all child views extend to full screen bounds
-        guard let navControllers = viewControllers as? [UINavigationController] else { return }
+        guard let viewControllers = viewControllers else { return }
         
-        for navController in navControllers {
-            navController.view.frame = view.bounds
-            if let rootViewController = navController.topViewController {
-                rootViewController.view.frame = navController.view.bounds
-            }
+        for viewController in viewControllers {
+            viewController.view.frame = view.bounds
         }
     }
 }
