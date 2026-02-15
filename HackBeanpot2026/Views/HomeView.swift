@@ -40,6 +40,7 @@ struct HomeView: View {
     @State private var testViewModel: HomeViewModel = .init(animalManager: AnimalManager.shared)
     @State private var yOffset: CGFloat = 0
     @State private var animationManager = AnimationManager.shared
+    @State private var animalManager = AnimalManager.shared
     @State private var isBlob: Bool = true
     @State private var showDevMode: Bool = false
     @State private var devModeUnlocked: Bool = false
@@ -49,12 +50,14 @@ struct HomeView: View {
     @State private var showCoinSetter: Bool = false
     @State private var coinAmount: String = ""
     @State private var showTaskAssigner: Bool = false
+    @State private var showInventory: Bool = false
     
     enum ResetType: String, CaseIterable {
         case tasks = "Tasks"
         case money = "Money"
         case animalProgression = "Animal Progression"
         case shopPurchases = "Shop Purchases"
+        case inventory = "Inventory"
         case all = "Everything"
     }
     
@@ -64,7 +67,7 @@ struct HomeView: View {
     
     var body: some View {
         ZStack {
-            Image("forest")
+            Image(animalManager.currentBackground.imageName)
                 .resizable()
                 .ignoresSafeArea()
             
@@ -72,7 +75,7 @@ struct HomeView: View {
                 HStack {
                     VStack(spacing: 10) {
                         if let animal {
-                            StatBar(value: 20 /*Double(animal.status.health.value)*/,
+                            StatBar(value: Double(animal.status.health.value),
                                     color: .red,
                                     icon: Image("health"),
                                     iconWidth: 40)
@@ -110,6 +113,14 @@ struct HomeView: View {
                         .background(.ultraThinMaterial)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                         .padding(.trailing)
+                        .popover(isPresented: $showDevMode, arrowEdge: .top) {
+                            DevModePopoverContent(
+                                showResetAlert: $showResetAlert,
+                                resetType: $resetType,
+                                showCoinSetter: $showCoinSetter,
+                                showTaskAssigner: $showTaskAssigner
+                            )
+                        }
                     }
                     .padding(.top)
                 }
@@ -149,17 +160,26 @@ struct HomeView: View {
                 
                 Spacer()
             }
-            
-            // Dev Mode Overlay
-            if showDevMode {
-                DevModeOverlay(
-                    isPresented: $showDevMode,
-                    showResetAlert: $showResetAlert,
-                    resetType: $resetType,
-                    showCoinSetter: $showCoinSetter,
-                    showTaskAssigner: $showTaskAssigner
-                )
+                    
+            // Inventory Button
+            VStack {
+                Button(action: {
+                    showInventory = true
+                }) {
+                    Image(systemName: "bag.fill")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                        .frame(width: 44, height: 44)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Circle())
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
+                }
+                Spacer()
             }
+            .padding(.trailing, 16)
             
             // Coin Setter Overlay
             if showCoinSetter {
@@ -173,6 +193,13 @@ struct HomeView: View {
             if showTaskAssigner {
                 TaskAssignerOverlay(
                     isPresented: $showTaskAssigner
+                )
+            }
+            
+            // Inventory Viewer Overlay
+            if showInventory {
+                InventoryOverlay(
+                    isPresented: $showInventory
                 )
             }
         }
@@ -198,12 +225,11 @@ struct HomeView: View {
             resetAnimalProgression()
         case .shopPurchases:
             resetShopPurchases()
+        case .inventory:
+            resetInventory()
         case .all:
-            resetTasks()
             resetMoney()
-            resetAnimalProgression()
-            resetShopPurchases()
-            resetObjectives()
+            resetAnimalProgression() // This clears inventory, tasks, objectives, purchase history, and resets animal
         }
     }
     
@@ -224,90 +250,87 @@ struct HomeView: View {
         AnimalManager.shared.clearPurchaseHistory()
     }
     
+    private func resetInventory() {
+        AnimalManager.shared.clearInventory()
+    }
+    
     private func resetObjectives() {
         AnimalManager.shared.objectivesManager.resetObjectives()
     }
 }
     
     
-    struct DevModeOverlay: View {
-        @Binding var isPresented: Bool
-        @Binding var showResetAlert: Bool
-        @Binding var resetType: HomeView.ResetType?
-        @Binding var showCoinSetter: Bool
-        @Binding var showTaskAssigner: Bool
-        
-        var body: some View {
-            ZStack {
-                Color.black.opacity(0.5)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        isPresented = false
-                    }
-                
+struct DevModePopoverContent: View {
+    @Binding var showResetAlert: Bool
+    @Binding var resetType: HomeView.ResetType?
+    @Binding var showCoinSetter: Bool
+    @Binding var showTaskAssigner: Bool
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
                 VStack(spacing: 20) {
-                    Text("Developer Mode")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
                     VStack(spacing: 12) {
+                        Text("Developer Tools")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                        
                         // Set Coins Button
                         Button("Set Coins") {
                             showCoinSetter = true
-                            isPresented = false
+                            dismiss()
                         }
                         .frame(maxWidth: .infinity)
-                        .padding()
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 16)
                         .background(Color.blue.opacity(0.8))
                         .foregroundColor(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                         
                         // Assign Task Button
                         Button("Assign Specific Task") {
                             showTaskAssigner = true
-                            isPresented = false
+                            dismiss()
                         }
                         .frame(maxWidth: .infinity)
-                        .padding()
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 16)
                         .background(Color.green.opacity(0.8))
                         .foregroundColor(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     
-                    Text("Reset Options")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
+                    Divider()
                     
                     VStack(spacing: 12) {
+                        Text("Reset Options")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                        
                         ForEach(HomeView.ResetType.allCases, id: \.rawValue) { type in
                             Button("Reset \(type.rawValue)") {
                                 resetType = type
                                 showResetAlert = true
-                                isPresented = false
+                                dismiss()
                             }
                             .frame(maxWidth: .infinity)
-                            .padding()
+                            .padding(.vertical, 12)
+                            .padding(.horizontal, 16)
                             .background(Color.red.opacity(0.8))
                             .foregroundColor(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
                     }
-                    
-                    Button("Close") {
-                        isPresented = false
-                    }
-                    .padding()
-                    .background(.secondary)
-                    .foregroundColor(.primary)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
-                .padding(30)
-                .background(.regularMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-                .padding(30)
+                .padding()
             }
+            .navigationTitle("Developer Mode")
+            .navigationBarTitleDisplayMode(.inline)
+            .frame(minWidth: 300, minHeight: 400)
         }
     }
+}
 
 struct CoinSetterOverlay: View {
     @Binding var isPresented: Bool
@@ -440,6 +463,36 @@ struct TaskAssignmentButton: View {
             .padding()
             .background(Color.green.opacity(0.8))
             .clipShape(RoundedRectangle(cornerRadius: 10))
+        }
+    }
+}
+
+struct InventoryOverlay: View {
+    @Binding var isPresented: Bool
+    
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.5)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    isPresented = false
+                }
+            
+            NavigationView {
+                InventoryView(animalManager: AnimalManager.shared)
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") {
+                                isPresented = false
+                            }
+                        }
+                    }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(.regularMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .padding(20)
         }
     }
 }

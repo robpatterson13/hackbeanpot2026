@@ -28,7 +28,6 @@ class HomeViewController: UIViewController {
     
     private func setupUI() {
         view.backgroundColor = UIColor.systemBackground
-        title = "Home"
         
         // Create and configure the SwiftUI hosting controller to fill the entire screen
         let swiftUIHostingController = UIHostingController(rootView: HomeView())

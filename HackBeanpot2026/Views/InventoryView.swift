@@ -8,11 +8,11 @@
 import SwiftUI
 
 struct InventoryView: View {
-    @StateObject private var viewModel: InventoryViewModel
+    @State private var viewModel: InventoryViewModel
     @State private var selectedCategory: InventoryCategory = .animals
     
     init(animalManager: AnimalManager) {
-        _viewModel = StateObject(wrappedValue: InventoryViewModel(animalManager: animalManager))
+        _viewModel = State(initialValue: InventoryViewModel(animalManager: animalManager))
     }
     
     var body: some View {
@@ -112,22 +112,71 @@ struct InventoryItemCard: View {
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.8)
             
-            // Equip/Unequip button
-            Button(action: item.isEquipped ? onUnequip : onEquip) {
-                Text(item.isEquipped ? "Unequip" : "Equip")
+            // Equip/Unequip button (animals and backgrounds can't be unequipped, only switched)
+            Button(action: item.isEquipped ? (cannotUnequip ? {} : onUnequip) : onEquip) {
+                Text(buttonText)
                     .font(.caption2)
                     .fontWeight(.medium)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
-                    .background(item.isEquipped ? Color.orange : Color.accentColor)
+                    .background(buttonColor)
                     .clipShape(RoundedRectangle(cornerRadius: 6))
             }
+            .disabled(item.isEquipped && cannotUnequip)
         }
         .padding(12)
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
+    }
+    
+    private var isAnimal: Bool {
+        switch item.itemType {
+        case .animal:
+            return true
+        default:
+            return false
+        }
+    }
+    
+    private var isBackground: Bool {
+        switch item.itemType {
+        case .background:
+            return true
+        default:
+            return false
+        }
+    }
+    
+    private var cannotUnequip: Bool {
+        return isAnimal || isBackground
+    }
+    
+    private var buttonText: String {
+        if item.isEquipped {
+            if isAnimal {
+                return "Active"
+            } else if isBackground {
+                return "Active"
+            } else {
+                return "Unequip"
+            }
+        } else {
+            return "Equip"
+        }
+    }
+    
+    private var buttonColor: Color {
+        if item.isEquipped {
+            if cannotUnequip {
+                return Color.green
+            } else {
+                return Color.orange
+            }
+        } else {
+            return Color.accentColor
+        }
     }
     
     @ViewBuilder
@@ -150,7 +199,8 @@ struct InventoryItemCard: View {
     }
 }
 
-final class InventoryViewModel: ObservableObject {
+@Observable
+final class InventoryViewModel {
     private let animalManager: AnimalManager
     
     init(animalManager: AnimalManager) {
@@ -162,38 +212,51 @@ final class InventoryViewModel: ObservableObject {
     }
     
     func equipItem(_ item: InventoryItem) {
-        animalManager.inventoryManager.equipItem(withId: item.id)
-        
-        // Apply the item effect based on category
-        switch item.itemType {
-        case .background(let backgroundType):
-            animalManager.selectedBackground = backgroundType
-        case .animal(let animalType):
-            animalManager.animal.type = animalType
-        case .accessory:
-            // Accessories might provide ongoing effects in the future
-            break
+        // When equipping an animal, automatically unequip the current one
+        if case .animal(let codableAnimalType) = item.itemType {
+            // First equip the new animal in inventory (this will unequip others automatically)
+            animalManager.inventoryManager.equipItem(withId: item.id)
+            
+            // Then update the animal manager's current animal
+            animalManager.animal.type = codableAnimalType.asAnimalType
+        } else if case .background(let backgroundType) = item.itemType {
+            // First equip the new background in inventory (this will unequip others automatically)
+            animalManager.inventoryManager.equipItem(withId: item.id)
+            
+            // Then update the animal manager's current background
+            animalManager.setSelectedBackground(backgroundType)
+        } else {
+            // For accessories, use normal equip logic
+            animalManager.inventoryManager.equipItem(withId: item.id)
         }
         
         animalManager.save()
     }
     
     func unequipItem(_ item: InventoryItem) {
-        animalManager.inventoryManager.unequipItem(withId: item.id)
-        
-        // Handle unequipping effects
-        switch item.itemType {
-        case .background:
-            animalManager.selectedBackground = .livingRoom // Default background
-        case .animal:
-            // Don't allow unequipping animals - they should switch to another animal instead
-            break
-        case .accessory:
-            // Remove accessory effects
-            break
+        // Prevent unequipping animals and backgrounds entirely
+        guard case .animal = item.itemType else {
+            guard case .background = item.itemType else {
+                animalManager.inventoryManager.unequipItem(withId: item.id)
+                
+                // Handle unequipping effects for accessories only
+                switch item.itemType {
+                case .accessory:
+                    // Remove accessory effects
+                    break
+                case .animal, .background:
+                    // Should never reach here due to guards
+                    break
+                }
+                
+                animalManager.save()
+                return
+            }
+            // For backgrounds, do nothing - they cannot be unequipped
+            return
         }
         
-        animalManager.save()
+        // For animals, do nothing - they cannot be unequipped
     }
 }
 

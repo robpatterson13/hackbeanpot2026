@@ -41,6 +41,7 @@ final class AnimalManager {
     private(set) var coins: Int
     var taskManager: TaskManager
     var objectivesManager: DailyObjectiveManager
+    var inventoryManager: InventoryManager
     private(set) var purchaseHistory: [PurchaseRecord] = []
     
     // Additional state used by objectives/UI
@@ -53,6 +54,10 @@ final class AnimalManager {
     
     var currentBackground: BackgroundType {
         selectedBackground ?? .livingRoom
+    }
+    
+    func setSelectedBackground(_ background: BackgroundType) {
+        selectedBackground = background
     }
     
     // MARK: - UserDefaults Keys
@@ -114,6 +119,7 @@ final class AnimalManager {
         // Initialize managers
         self.taskManager = TaskManager()
         self.objectivesManager = DailyObjectiveManager()
+        self.inventoryManager = InventoryManager()
         
         // Load task manager data
         if let activeTasksData = UserDefaults.standard.data(forKey: UserDefaultsKeys.activeTasks),
@@ -153,25 +159,62 @@ final class AnimalManager {
         // Set up the bidirectional relationship
         self.taskManager.animalManager = self
         self.objectivesManager.animalManager = self
+        
+        // Ensure the current animal is in inventory and equipped
+        let currentAnimalItem = InventoryItemType.animal(animal.type)
+        if !inventoryManager.hasItem(currentAnimalItem) {
+            inventoryManager.addItem(currentAnimalItem, isEquipped: true)
+        } else {
+            // Make sure the current animal is equipped
+            if let itemId = inventoryManager.items.first(where: { $0.itemType == currentAnimalItem })?.id {
+                inventoryManager.equipItem(withId: itemId)
+            }
+        }
+        
+        // Ensure the current background is in inventory and equipped
+        if let currentBg = selectedBackground {
+            let currentBackgroundItem = InventoryItemType.background(currentBg)
+            if !inventoryManager.hasItem(currentBackgroundItem) {
+                inventoryManager.addItem(currentBackgroundItem, isEquipped: true)
+            } else {
+                // Make sure the current background is equipped
+                if let itemId = inventoryManager.items.first(where: { $0.itemType == currentBackgroundItem })?.id {
+                    inventoryManager.equipItem(withId: itemId)
+                }
+            }
+        }
     }
 
     enum PurchaseError: Error {
         case insufficientFunds
         case invalidUpgrade
+        case alreadyOwned
     }
 
     func canBuy(_ item: ShopItem) -> Bool {
+        // Check if we have enough coins
+        guard coins >= item.cost else { return false }
+        
+        // Check if item can be purchased (not already owned for unique items)
+        guard inventoryManager.canPurchaseShopItem(item) else { return false }
+        
+        // Check upgrade-specific logic
         switch item {
         case .upgrade(let upgrade):
-            return coins >= item.cost && upgrade.isUnlocked(animal.type)
+            return upgrade.isUnlocked(animal.type)
         default:
-            return coins >= item.cost
+            return true
         }
     }
 
     func buy(_ item: ShopItem) throws(PurchaseError) {
         guard coins >= item.cost else {
             throw PurchaseError.insufficientFunds
+        }
+        
+        // Check if item can be purchased (not already owned for unique items)
+        guard inventoryManager.canPurchaseShopItem(item) else {
+            throw PurchaseError.alreadyOwned
         }
 
         switch item {
@@ -180,12 +223,21 @@ final class AnimalManager {
                 throw PurchaseError.invalidUpgrade
             }
             animal.type = upgrade.asAnimalType
+            // Add the new animal to inventory as equipped
+            inventoryManager.purchaseShopItem(item, isEquipped: true)
 
         case .background(let bg):
-            selectedBackground = bg
-            // Buying a background does not change animal stats
+            setSelectedBackground(bg)
+            // Add background to inventory and equip it
+            inventoryManager.purchaseShopItem(item, isEquipped: true)
+            
+        case .fedora, .sunglasses, .tie, .bowtie:
+            // Accessories don't immediately affect stats but go to inventory
+            inventoryManager.purchaseShopItem(item, isEquipped: false)
+            apply(levelIncrease: item.increase)
             
         default:
+            // Consumables (food, potions) - apply effect immediately
             apply(levelIncrease: item.increase)
         }
 
@@ -311,6 +363,12 @@ final class AnimalManager {
         saveState()
     }
     
+    /// Clears inventory items (for testing or reset purposes) 
+    func clearInventory() {
+        inventoryManager.clearInventory()
+        saveState()
+    }
+    
     // MARK: - Developer Mode Reset Functions
     
     /// Resets coins to 0
@@ -341,7 +399,13 @@ final class AnimalManager {
         objectivesManager.resetObjectives()
         
         // Reset background to default
-        selectedBackground = .livingRoom
+        setSelectedBackground(.livingRoom)
+        
+        // Clear inventory and add initial defaults (clearInventory already ensures essentials remain)
+        inventoryManager.clearInventory()
+        // The clearInventory method will ensure blob and living room are equipped, now sync AnimalManager
+        animal.type = .blob
+        setSelectedBackground(.livingRoom)
         
         saveState()
     }
@@ -358,18 +422,6 @@ final class AnimalManager {
     func resetObjectives() {
         objectivesManager.resetObjectives()
         saveState()
-    }
-}
-
-private extension UpgradeType {
-    var asAnimalType: AnimalType {
-        switch self {
-        case .fish:    return .fish
-        case .gecko:   return .gecko
-        case .cat:     return .cat
-        case .dog:     return .dog
-        case .unicorn: return .unicorn
-        }
     }
 }
 

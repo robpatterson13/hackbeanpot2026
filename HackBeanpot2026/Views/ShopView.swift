@@ -35,6 +35,10 @@ final class ShopViewModel: ObservableObject {
         animalManager.canBuy(item)
     }
     
+    func isOwned(_ item: ShopItem) -> Bool {
+        !animalManager.inventoryManager.canPurchaseShopItem(item)
+    }
+    
     func buy(_ item: ShopItem) throws {
         try animalManager.buy(item)
         // Reflect latest coins after purchase
@@ -121,11 +125,14 @@ struct ShopView: View {
                                             errorMessage = "Not enough coins."
                                         } catch AnimalManager.PurchaseError.invalidUpgrade {
                                             errorMessage = "This upgrade isn't unlocked yet."
+                                        } catch AnimalManager.PurchaseError.alreadyOwned {
+                                            errorMessage = "You already own this item."
                                         } catch {
                                             errorMessage = "Couldn't complete purchase."
                                         }
                                     },
-                                    onClose: { selectedItem = nil })
+                                    onClose: { selectedItem = nil },
+                                    isOwned: viewModel.isOwned(item))
             }
         }
     }
@@ -201,6 +208,8 @@ struct ShopView: View {
     
     @ViewBuilder
     private func thumbnailSquare(for item: ShopItem, size: CGFloat) -> some View {
+        let isOwned = viewModel.isOwned(item)
+        
         ZStack {
             if case .background = item, let name = shopAssetName(for: item) {
                 Image(name)
@@ -209,17 +218,36 @@ struct ShopView: View {
                     .frame(width: size, height: size)
                     .clipShape(RoundedRectangle(cornerRadius: 6))
                     .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.white.opacity(0.9), lineWidth: 1))
+                    .opacity(isOwned ? 0.6 : 1.0)
             } else if let name = shopAssetName(for: item) {
                 Image(name)
                     .resizable()
                     .scaledToFit()
                     .frame(width: size * 0.9, height: size * 0.9)
+                    .opacity(isOwned ? 0.6 : 1.0)
             } else {
                 Image(systemName: item.iconSystemName ?? "bag")
                     .resizable()
                     .scaledToFit()
                     .frame(width: size * 0.8, height: size * 0.8)
                     .foregroundColor(.accentColor)
+                    .opacity(isOwned ? 0.6 : 1.0)
+            }
+            
+            // Owned indicator
+            if isOwned {
+                VStack {
+                    HStack {
+                        Spacer()
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                            .background(Color.white, in: Circle())
+                            .font(.system(size: 20))
+                    }
+                    Spacer()
+                }
+                .frame(width: size, height: size)
+                .padding(4)
             }
         }
     }
@@ -252,13 +280,15 @@ struct ShopItemCard: View {
     let onBuy: () -> Void
     let compact: Bool
     let imageHeight: CGFloat?
+    let isOwned: Bool
 
-    init(item: ShopItem, canBuy: Bool, onBuy: @escaping () -> Void, compact: Bool = false, imageHeight: CGFloat? = nil) {
+    init(item: ShopItem, canBuy: Bool, onBuy: @escaping () -> Void, compact: Bool = false, imageHeight: CGFloat? = nil, isOwned: Bool = false) {
         self.item = item
         self.canBuy = canBuy
         self.onBuy = onBuy
         self.compact = compact
         self.imageHeight = imageHeight
+        self.isOwned = isOwned
     }
     
     var body: some View {
@@ -286,10 +316,21 @@ struct ShopItemCard: View {
                     .frame(width: 28, height: 28)
                 Text("\(item.cost)")
                 Spacer()
-                Button("Buy", action: onBuy)
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(compact ? .small : .regular)
-                    .disabled(!canBuy)
+                
+                if isOwned {
+                    Text("Owned")
+                        .font(compact ? .caption2 : .subheadline)
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, compact ? 8 : 12)
+                        .padding(.vertical, compact ? 4 : 8)
+                        .background(Color(.secondarySystemBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                } else {
+                    Button("Buy", action: onBuy)
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(compact ? .small : .regular)
+                        .disabled(!canBuy)
+                }
             }
             .font(compact ? .caption2 : .subheadline)
         }
@@ -333,12 +374,21 @@ struct ShopItemDetailSheet: View {
     let canBuy: Bool
     let onBuy: () -> Void
     let onClose: () -> Void
+    let isOwned: Bool
+
+    init(item: ShopItem, canBuy: Bool, onBuy: @escaping () -> Void, onClose: @escaping () -> Void, isOwned: Bool = false) {
+        self.item = item
+        self.canBuy = canBuy
+        self.onBuy = onBuy
+        self.onClose = onClose
+        self.isOwned = isOwned
+    }
 
     var body: some View {
         NavigationView {
             GeometryReader { geo in
                 ScrollView {
-                    ShopItemCard(item: item, canBuy: canBuy, onBuy: onBuy, compact: false, imageHeight: max(200, geo.size.height * 0.45))
+                    ShopItemCard(item: item, canBuy: canBuy, onBuy: onBuy, compact: false, imageHeight: max(200, geo.size.height * 0.45), isOwned: isOwned)
                         .frame(maxWidth: .infinity)
                         .padding()
                 }

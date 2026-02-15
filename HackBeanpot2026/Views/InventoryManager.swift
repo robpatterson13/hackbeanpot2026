@@ -7,11 +7,50 @@
 
 import Foundation
 
+// MARK: - Codable AnimalType
+enum CodableAnimalType: String, Codable, Hashable, CaseIterable {
+    case blob, fish, gecko, cat, dog, unicorn
+    
+    var displayName: String {
+        switch self {
+        case .blob: return "Blob"
+        case .fish: return "Fish"
+        case .gecko: return "Gecko"
+        case .cat: return "Cat"
+        case .dog: return "Dog"
+        case .unicorn: return "Unicorn"
+        }
+    }
+    
+    // Convert to/from the original AnimalType
+    init(_ animalType: AnimalType) {
+        switch animalType {
+        case .blob: self = .blob
+        case .fish: self = .fish
+        case .gecko: self = .gecko
+        case .cat: self = .cat
+        case .dog: self = .dog
+        case .unicorn: self = .unicorn
+        }
+    }
+    
+    var asAnimalType: AnimalType {
+        switch self {
+        case .blob: return .blob
+        case .fish: return .fish
+        case .gecko: return .gecko
+        case .cat: return .cat
+        case .dog: return .dog
+        case .unicorn: return .unicorn
+        }
+    }
+}
+
 // MARK: - Inventory Item Types
 enum InventoryItemType: Codable, Hashable {
     case accessory(AccessoryType)
     case background(BackgroundType)
-    case animal(AnimalType)
+    case animal(CodableAnimalType)
     
     var displayName: String {
         switch self {
@@ -33,6 +72,11 @@ enum InventoryItemType: Codable, Hashable {
         case .animal:
             return .animals
         }
+    }
+    
+    // Convenience initializer for AnimalType
+    static func animal(_ animalType: AnimalType) -> InventoryItemType {
+        return .animal(CodableAnimalType(animalType))
     }
 }
 
@@ -86,9 +130,39 @@ final class InventoryManager {
     
     init() {
         loadInventory()
+        ensureAnimalEquipped()
     }
     
     // MARK: - Core Inventory Methods
+    
+    /// Ensures at least one animal is equipped at all times
+    private func ensureAnimalEquipped() {
+        let hasEquippedAnimal = items.contains { item in
+            if case .animal = item.itemType, item.isEquipped {
+                return true
+            }
+            return false
+        }
+        
+        if !hasEquippedAnimal {
+            // Find any animal in inventory and equip it
+            if let animalIndex = items.firstIndex(where: { 
+                if case .animal = $0.itemType { return true }
+                return false
+            }) {
+                items[animalIndex] = InventoryItem(
+                    itemType: items[animalIndex].itemType,
+                    acquiredDate: items[animalIndex].acquiredDate,
+                    isEquipped: true
+                )
+            } else {
+                // No animals in inventory, add and equip blob as default
+                let defaultAnimal = InventoryItem(itemType: .animal(AnimalType.blob), isEquipped: true)
+                items.append(defaultAnimal)
+            }
+            saveInventory()
+        }
+    }
     
     /// Adds an item to the inventory
     func addItem(_ itemType: InventoryItemType, isEquipped: Bool = false) {
@@ -98,6 +172,21 @@ final class InventoryManager {
         }
         
         let newItem = InventoryItem(itemType: itemType, isEquipped: isEquipped)
+        
+        // If this item should be equipped, unequip others in the same category first
+        if isEquipped {
+            let category = itemType.category
+            for i in items.indices {
+                if items[i].itemType.category == category {
+                    items[i] = InventoryItem(
+                        itemType: items[i].itemType,
+                        acquiredDate: items[i].acquiredDate,
+                        isEquipped: false
+                    )
+                }
+            }
+        }
+        
         items.append(newItem)
         saveInventory()
     }
@@ -149,9 +238,14 @@ final class InventoryManager {
         saveInventory()
     }
     
-    /// Unequips an item
+    /// Unequips an item (animals cannot be unequipped, only switched)
     func unequipItem(withId id: UUID) {
         guard let itemIndex = items.firstIndex(where: { $0.id == id }) else { return }
+        
+        // Prevent unequipping animals - they should be switched instead
+        if case .animal = items[itemIndex].itemType {
+            return
+        }
         
         items[itemIndex] = InventoryItem(
             itemType: items[itemIndex].itemType,
@@ -163,14 +257,50 @@ final class InventoryManager {
     }
     
     /// Removes an item from inventory (for dev/reset purposes)
+    /// Prevents removing the last equipped animal to maintain the constraint
     func removeItem(_ itemType: InventoryItemType) {
+        // Check if we're trying to remove an equipped animal and it's the only one
+        if case .animal = itemType {
+            let animalItems = items.filter { 
+                if case .animal = $0.itemType { return true }
+                return false
+            }
+            let equippedAnimals = animalItems.filter { $0.isEquipped }
+            
+            // If this is the only equipped animal and we only have one animal total, don't remove it
+            if animalItems.count == 1 && equippedAnimals.count == 1 {
+                return // Prevent removal of the last animal
+            }
+        }
+        
         items.removeAll { $0.itemType == itemType }
+        
+        // After removal, ensure we still have an equipped animal
+        ensureAnimalEquipped()
         saveInventory()
     }
     
-    /// Clears all inventory items
+    /// Clears all inventory items except ensures one animal remains equipped
     func clearInventory() {
+        // Find currently equipped animal
+        let equippedAnimal = items.first { item in
+            if case .animal = item.itemType, item.isEquipped {
+                return true
+            }
+            return false
+        }
+        
+        // Clear all items
         items.removeAll()
+        
+        // Re-add the equipped animal or default to blob if none was equipped
+        if let animal = equippedAnimal {
+            items.append(animal)
+        } else {
+            let defaultAnimal = InventoryItem(itemType: .animal(AnimalType.blob), isEquipped: true)
+            items.append(defaultAnimal)
+        }
+        
         saveInventory()
     }
     
@@ -215,6 +345,8 @@ final class InventoryManager {
            let decoded = try? JSONDecoder().decode([InventoryItem].self, from: data) {
             items = decoded
         }
+        // Ensure an animal is equipped after loading
+        ensureAnimalEquipped()
     }
 }
 
@@ -234,7 +366,7 @@ extension ShopItem {
         case .background(let backgroundType):
             return .background(backgroundType)
         case .upgrade(let upgradeType):
-            return .animal(upgradeType.asAnimalType)
+            return .animal(CodableAnimalType(upgradeType.asAnimalType))
         case .steak, .potion, .pills:
             // Consumables don't have inventory equivalents
             return .accessory(.fedora) // This shouldn't be called for consumables
