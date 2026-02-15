@@ -63,6 +63,10 @@ struct HomeView: View {
         AnimalManager.shared.animal
     }
     
+    private var animal: Animal? {
+        AnimalManager.shared.animal
+    }
+    
     var body: some View {
         ZStack {
             Image(homeViewModel.getBackgroundImage())
@@ -116,6 +120,54 @@ struct HomeView: View {
             Spacer()
             
         }
+    }
+
+private struct StatBar: View {
+    let value: Double
+    let color: Color
+    let icon: Image
+    let iconWidth: CGFloat
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .fill(Color.white.opacity(0.7)).frame(width: 32, height: 32)
+                    .overlay(
+                                Circle()
+                                    .stroke(Color.black, lineWidth: 1)
+                            )
+                icon
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: iconWidth, height: iconWidth)
+            }
+            .frame(width: 40, height: 40, alignment: .center)
+            
+            ZStack(alignment: .leading) {
+                GeometryReader { geo in
+                    Rectangle()
+                        .fill(color)
+                        .frame(width: max((geo.size.width - 11 ) * CGFloat(value / 100), 0), height: 12)
+                        .padding(.horizontal, 5)
+                        .frame(height: 12)
+                }
+                Image("bar")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(height: 12)
+                    .offset(y: 4)
+                
+                
+            }
+            .frame(height: 12)
+            
+            Text("\(Int(value))/100")
+                .font(.caption)
+                .foregroundColor(.black)
+                .frame(width: 50, alignment: .trailing)
+        }
+        .frame(height: 24)
     }
 }
 
