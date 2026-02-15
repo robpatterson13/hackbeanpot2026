@@ -17,7 +17,6 @@ class AnimalAccessoryManager {
         .fedora: [
             .blob: AccessoryPosition(xOffset: 0, yOffset: -50),
             .fish: AccessoryPosition(xOffset: 10, yOffset: -60),
-            // Adjust here: increase x to move right, decrease y (more negative) to move up
             .gecko: AccessoryPosition(xOffset: -13, yOffset: -91),
             .cat: AccessoryPosition(xOffset: 0, yOffset: -50),
             .dog: AccessoryPosition(xOffset: 0, yOffset: -50),
