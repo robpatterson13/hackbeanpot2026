@@ -68,6 +68,7 @@ struct HomeView: View {
     @State private var coinAmount: String = ""
     @State private var showTaskAssigner: Bool = false
     @State private var showInventory: Bool = false
+    @State private var showStatDecaySettings: Bool = false
     
     enum ResetType: String, CaseIterable {
         case tasks = "Tasks"
@@ -152,7 +153,8 @@ struct HomeView: View {
                                 showResetAlert: $showResetAlert,
                                 resetType: $resetType,
                                 showCoinSetter: $showCoinSetter,
-                                showTaskAssigner: $showTaskAssigner
+                                showTaskAssigner: $showTaskAssigner,
+                                showStatDecaySettings: $showStatDecaySettings
                             )
                         }
                     }
@@ -207,6 +209,13 @@ struct HomeView: View {
             if showTaskAssigner {
                 TaskAssignerOverlay(
                     isPresented: $showTaskAssigner
+                )
+            }
+            
+            // Stat Decay Settings Overlay
+            if showStatDecaySettings {
+                StatDecaySettingsOverlay(
+                    isPresented: $showStatDecaySettings
                 )
             }
             
@@ -280,6 +289,7 @@ struct DevModePopoverContent: View {
     @Binding var resetType: HomeView.ResetType?
     @Binding var showCoinSetter: Bool
     @Binding var showTaskAssigner: Bool
+    @Binding var showStatDecaySettings: Bool
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -312,6 +322,18 @@ struct DevModePopoverContent: View {
                         .padding(.vertical, 12)
                         .padding(.horizontal, 16)
                         .background(Color.green.opacity(0.8))
+                        .foregroundColor(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        
+                        // Stat Decay Settings Button
+                        Button("Stat Decay Settings") {
+                            showStatDecaySettings = true
+                            dismiss()
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 16)
+                        .background(Color.purple.opacity(0.8))
                         .foregroundColor(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
@@ -570,5 +592,87 @@ private struct StatBar: View {
                 .frame(width: 50, alignment: .trailing)
         }
         .frame(height: 24)
+    }
+}
+
+struct StatDecaySettingsOverlay: View {
+    @Binding var isPresented: Bool
+    @State private var intervalString: String = ""
+    @State private var currentInterval: TimeInterval = 600
+    @FocusState private var isTextFieldFocused: Bool
+    
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.5)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    isPresented = false
+                }
+            
+            VStack(spacing: 20) {
+                Text("Stat Decay Settings")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                
+                VStack(spacing: 12) {
+                    Text("Current interval: \(Int(currentInterval)) seconds")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
+                    Text("Default: 600 seconds (10 minutes)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                TextField("Enter interval in seconds", text: $intervalString)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .keyboardType(.numberPad)
+                    .focused($isTextFieldFocused)
+                
+                HStack(spacing: 15) {
+                    Button("Cancel") {
+                        isPresented = false
+                        intervalString = ""
+                    }
+                    .padding()
+                    .background(.secondary)
+                    .foregroundColor(.primary)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    
+                    Button("Reset to Default") {
+                        AnimalManager.shared.resetStatDecayInterval()
+                        currentInterval = 600
+                        intervalString = ""
+                        isPresented = false
+                    }
+                    .padding()
+                    .background(Color.orange)
+                    .foregroundColor(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    
+                    Button("Set") {
+                        if let interval = TimeInterval(intervalString), interval > 0 {
+                            AnimalManager.shared.setStatDecayInterval(interval)
+                            currentInterval = interval
+                            isPresented = false
+                            intervalString = ""
+                        }
+                    }
+                    .padding()
+                    .background(intervalString.isEmpty || TimeInterval(intervalString) == nil || TimeInterval(intervalString) ?? 0 <= 0 ? Color.gray : Color.blue)
+                    .foregroundColor(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .disabled(intervalString.isEmpty || TimeInterval(intervalString) == nil || TimeInterval(intervalString) ?? 0 <= 0)
+                }
+            }
+            .padding(30)
+            .background(.regularMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .padding(30)
+        }
+        .onAppear {
+            currentInterval = AnimalManager.shared.currentStatDecayInterval
+            isTextFieldFocused = true
+        }
     }
 }

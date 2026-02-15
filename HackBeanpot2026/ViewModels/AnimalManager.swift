@@ -14,6 +14,7 @@
 
 import Foundation
 import Combine
+import UIKit
 
 // MARK: - Purchase Record
 struct PurchaseRecord: Codable, Identifiable {
@@ -60,6 +61,15 @@ final class AnimalManager {
         selectedBackground = background
     }
     
+    // MARK: - Stat Decay System
+    private var statDecayTimer: Timer?
+    private var statDecayInterval: TimeInterval {
+        UserDefaults.standard.object(forKey: UserDefaultsKeys.statDecayInterval) as? TimeInterval ?? 600 // Default 10 minutes
+    }
+    private let healthDecayRate: Int = 1 // Health decreases by 1 point per interval
+    private let happinessDecayRate: Int = 1 // Happiness decreases by 1 point per interval  
+    private let hungerDecayRate: Int = 2 // Hunger decreases by 2 points per interval (pets get hungry faster)
+    
     // MARK: - UserDefaults Keys
     private enum UserDefaultsKeys {
         static let animalType = "animalType"
@@ -69,6 +79,8 @@ final class AnimalManager {
         static let coins = "coins"
         static let purchaseHistory = "purchaseHistory"
         static let selectedBackground = "selectedBackground"
+        static let lastUpdateTime = "lastUpdateTime"
+        static let statDecayInterval = "statDecayInterval"
         
         // Task Manager keys
         static let activeTasks = "activeTasks"
@@ -183,6 +195,9 @@ final class AnimalManager {
                 }
             }
         }
+        
+        // Initialize stat decay system
+        setupStatDecay()
     }
 
     enum PurchaseError: Error {
@@ -289,6 +304,110 @@ final class AnimalManager {
         animal.status.hunger.value += hungerIncrease
         clampStatus()
         saveState()
+    }
+    
+    // MARK: - Stat Decay System Implementation
+    
+    private func setupStatDecay() {
+        // Check for time elapsed while app was closed
+        handleBackgroundTimeElapsed()
+        
+        // Start the decay timer
+        startStatDecayTimer()
+        
+        // Listen for app lifecycle events
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appWillEnterBackground),
+            name: UIApplication.willResignActiveNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
+    }
+    
+    private func startStatDecayTimer() {
+        stopStatDecayTimer()
+        statDecayTimer = Timer.scheduledTimer(withTimeInterval: statDecayInterval, repeats: true) { [weak self] _ in
+            self?.decayStats()
+        }
+    }
+    
+    private func stopStatDecayTimer() {
+        statDecayTimer?.invalidate()
+        statDecayTimer = nil
+    }
+    
+    @objc private func appWillEnterBackground() {
+        // Save current time when app goes to background
+        UserDefaults.standard.set(Date(), forKey: UserDefaultsKeys.lastUpdateTime)
+        stopStatDecayTimer()
+    }
+    
+    @objc private func appDidBecomeActive() {
+        // Handle time that elapsed while app was in background
+        handleBackgroundTimeElapsed()
+        
+        // Restart the decay timer
+        startStatDecayTimer()
+    }
+    
+    private func handleBackgroundTimeElapsed() {
+        guard let lastUpdateTime = UserDefaults.standard.object(forKey: UserDefaultsKeys.lastUpdateTime) as? Date else {
+            // First launch or no previous time recorded
+            UserDefaults.standard.set(Date(), forKey: UserDefaultsKeys.lastUpdateTime)
+            return
+        }
+        
+        let timeElapsed = Date().timeIntervalSince(lastUpdateTime)
+        let intervalsElapsed = Int(timeElapsed / statDecayInterval)
+        
+        // Apply decay for each interval that passed
+        for _ in 0..<intervalsElapsed {
+            decayStats()
+        }
+        
+        // Update the last update time
+        UserDefaults.standard.set(Date(), forKey: UserDefaultsKeys.lastUpdateTime)
+    }
+    
+    private func decayStats() {
+        let oldHealth = animal.status.health.value
+        let oldHappiness = animal.status.happiness.value
+        let oldHunger = animal.status.hunger.value
+        
+        // Decrease each stat by its decay rate
+        animal.status.health.value -= healthDecayRate
+        animal.status.happiness.value -= happinessDecayRate
+        animal.status.hunger.value -= hungerDecayRate
+        
+        // Ensure stats don't go below 0
+        clampStatus()
+        
+        // Only save if something actually changed
+        if oldHealth != animal.status.health.value || 
+           oldHappiness != animal.status.happiness.value || 
+           oldHunger != animal.status.hunger.value {
+            saveState()
+            
+            // Debug logging
+            print("Stats decayed: Health \(oldHealth)→\(animal.status.health.value), Happiness \(oldHappiness)→\(animal.status.happiness.value), Hunger \(oldHunger)→\(animal.status.hunger.value)")
+        }
+    }
+    
+    // Public method to manually trigger stat decay (for testing)
+    func triggerStatDecay() {
+        decayStats()
+    }
+    
+    deinit {
+        stopStatDecayTimer()
+        NotificationCenter.default.removeObserver(self)
     }
     
     // MARK: - Persistence
@@ -436,6 +555,34 @@ final class AnimalManager {
     func resetObjectives() {
         objectivesManager.resetObjectives()
         saveState()
+    }
+    
+    // MARK: - Dev Mode Stat Decay Settings
+    
+    /// Gets the current stat decay interval in seconds
+    var currentStatDecayInterval: TimeInterval {
+        return statDecayInterval
+    }
+    
+    /// Sets the stat decay interval in seconds (for dev mode)
+    func setStatDecayInterval(_ interval: TimeInterval) {
+        let clampedInterval = max(1, interval) // Minimum 1 second
+        UserDefaults.standard.set(clampedInterval, forKey: UserDefaultsKeys.statDecayInterval)
+        
+        // Restart the timer with the new interval if it's currently running
+        if statDecayTimer != nil {
+            startStatDecayTimer()
+        }
+    }
+    
+    /// Resets stat decay interval to default (600 seconds)
+    func resetStatDecayInterval() {
+        UserDefaults.standard.removeObject(forKey: UserDefaultsKeys.statDecayInterval)
+        
+        // Restart the timer with the default interval if it's currently running
+        if statDecayTimer != nil {
+            startStatDecayTimer()
+        }
     }
 }
 
