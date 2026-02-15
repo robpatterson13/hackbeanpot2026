@@ -58,7 +58,7 @@ struct TaskView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(task.habit.displayName)
-                    .font(.title3)
+                    .font(.habitTitle)
                     .bold()
                 HStack {
                     Image(systemName: expirationIcon)
