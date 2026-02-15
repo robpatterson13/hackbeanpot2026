@@ -42,12 +42,12 @@ class AnimalAccessoryManager {
         ],
         
         .tie: [
-            .blob: AccessoryPosition(xOffset: -5, yOffset: 35),
-            .fish: AccessoryPosition(xOffset: -15, yOffset: 15),
-            .gecko: AccessoryPosition(xOffset: -10, yOffset: 30),
-            .cat: AccessoryPosition(xOffset: -5, yOffset: 30),
-            .dog: AccessoryPosition(xOffset: -5, yOffset: 35),
-            .unicorn: AccessoryPosition(xOffset: -10, yOffset: 30)
+            .blob: AccessoryPosition(xOffset: 0, yOffset: 43),
+            .fish: AccessoryPosition(xOffset: -48, yOffset: 40),
+            .gecko: AccessoryPosition(xOffset: -10, yOffset: 15),
+            .cat: AccessoryPosition(xOffset: 10, yOffset: 32),
+            .dog: AccessoryPosition(xOffset: 5, yOffset: 35),
+            .unicorn: AccessoryPosition(xOffset: -20, yOffset: 50)
         ]
     ]
     
