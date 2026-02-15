@@ -66,6 +66,16 @@ enum UpgradeType: CaseIterable, Buyable, Codable {
             return 1000
         }
     }
+    
+    var title: String {
+        switch self {
+        case .fish:    return "Fish"
+        case .gecko:   return "Gecko"
+        case .cat:     return "Cat"
+        case .dog:     return "Dog"
+        case .unicorn: return "Unicorn"
+        }
+    }
 }
 
 enum ShopItem: Buyable, Codable {
@@ -135,9 +145,55 @@ enum ShopItem: Buyable, Codable {
             return AnimalNeverLevel()
         }
     }
-
+    
+    var displayName: String {
+        switch self {
+        case .steak:                 return "Steak"
+        case .fedora:                return "Fedora"
+        case .sunglasses:            return "Sunglasses"
+        case .tie:                   return "Tie"
+        case .bowtie:                return "Bow Tie"
+        case .potion:                return "Potion"
+        case .pills:                 return "Pills"
+        case .background(let b):     return b.displayName
+        case .upgrade(let upgrade):  return "Upgrade: \(upgrade.title)"
+        }
+    }
+    
+    /// SF Symbol name to use for non-background items. Backgrounds return nil because they use their image asset.
+    var iconSystemName: String? {
+        switch self {
+        case .steak:       return "fork.knife.circle"
+        case .fedora:      return "tshirt"
+        case .sunglasses:  return "sunglasses"
+        case .tie:         return "tshirt"
+        case .bowtie:      return "tshirt"
+        case .potion:      return "cross.case.fill"
+        case .pills:       return "pills"
+        case .background:  return nil
+        case .upgrade:     return "arrow.up.circle"
+        }
+    }
 }
 
 class Shop {
-    let items: [ShopItem] = []
+    let items: [ShopItem]
+    
+    init() {
+        var base: [ShopItem] = [
+            .steak,
+            .potion,
+            .pills,
+            .fedora,
+            .sunglasses,
+            .tie,
+            .bowtie
+        ]
+        
+        // Add all backgrounds and upgrades to the catalog
+        base += BackgroundType.allCases.map { .background($0) }
+        base += UpgradeType.allCases.map { .upgrade($0) }
+        
+        self.items = base
+    }
 }

@@ -23,19 +23,21 @@ struct PurchaseRecord: Codable, Identifiable {
     }
 }
 
-final class AnimalManager: ObservableObject {
+@Observable
+final class AnimalManager {
     
     // MARK: - Singleton
     static let shared = AnimalManager()
 
-    @Published private(set) var animal: Animal
+    private(set) var animal: Animal
     private let shop: Shop
-    @Published private(set) var coins: Int
-    let taskManager: TaskManager
-    @Published private(set) var purchaseHistory: [PurchaseRecord] = []
+    private(set) var coins: Int
+    var taskManager: TaskManager
+    var objectivesManager: DailyObjectiveManager
+    private(set) var purchaseHistory: [PurchaseRecord] = []
     
     // Additional state used by objectives/UI
-    @Published private(set) var selectedBackground: BackgroundType? = .livingRoom
+    private(set) var selectedBackground: BackgroundType? = .livingRoom
     
     // MARK: - UserDefaults Keys
     private enum UserDefaultsKeys {
@@ -50,6 +52,7 @@ final class AnimalManager: ObservableObject {
     private init() {
         self.shop = Shop()
         self.taskManager = TaskManager()
+        self.objectivesManager = DailyObjectiveManager()
         
         // Load persisted data or create defaults
         let savedAnimalType = UserDefaults.standard.string(forKey: UserDefaultsKeys.animalType) ?? "blob"
@@ -78,29 +81,7 @@ final class AnimalManager: ObservableObject {
         
         // Set up the bidirectional relationship
         self.taskManager.animalManager = self
-    }
-    
-    private init(animal: Animal, shop: Shop, taskManager: TaskManager, coins: Int = 0) {
-        self.animal = animal
-        self.shop = shop
-        self.taskManager = taskManager
-        self.coins = coins
-        self.purchaseHistory = []
-        
-        // Set up the bidirectional relationship
-        self.taskManager.animalManager = self
-    }
-    
-    convenience init(testing: Bool) {
-        let happiness = AnimalHappiness(value: 100)
-        let hunger = AnimalHunger(value: 100)
-        let health = AnimalHealth(value: 100)
-        let status = AnimalStatus(happiness: happiness, health: health, hunger: hunger)
-        let shop = Shop()
-        let animal = Animal(type: .blob, status: status)
-        let taskManager = TaskManager()
-        
-        self.init(animal: animal, shop: shop, taskManager: taskManager)
+        self.objectivesManager.animalManager = self
     }
 
     enum PurchaseError: Error {
@@ -219,6 +200,37 @@ final class AnimalManager: ObservableObject {
     /// Clears all purchase history (for testing or reset purposes)
     func clearPurchaseHistory() {
         purchaseHistory.removeAll()
+        saveState()
+    }
+    
+    // MARK: - Developer Mode Reset Functions
+    
+    /// Resets coins to 0
+    func resetCoins() {
+        coins = 0
+        saveState()
+    }
+    
+    /// Sets coins to a specific amount
+    func setCoins(_ amount: Int) {
+        coins = max(0, amount) // Ensure non-negative
+        saveState()
+    }
+    
+    /// Resets animal to initial state (blob with full stats)
+    func resetAnimalProgression() {
+        // Reset to blob with full stats
+        animal.type = .blob
+        animal.status.happiness.value = 100
+        animal.status.health.value = 100
+        animal.status.hunger.value = 100
+        
+        // Clear purchase history since animal progression is reset
+        purchaseHistory.removeAll()
+        
+        // Reset background to default
+        selectedBackground = .livingRoom
+        
         saveState()
     }
 }

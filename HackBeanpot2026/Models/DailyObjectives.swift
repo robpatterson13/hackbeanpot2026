@@ -59,12 +59,12 @@ struct DailyObjective {
     }
 }
 
-@MainActor
-final class DailyObjectiveManager: ObservableObject {
+@Observable
+final class DailyObjectiveManager {
     weak var animalManager: AnimalManager?
     
-    @Published var currentObjective: DailyObjective?
-    @Published var completedObjectives: [DailyObjective] = []
+    var currentObjective: DailyObjective?
+    var completedObjectives: [DailyObjective] = []
     
     func assignNewObjective() {
         if let objective = currentObjective, Calendar.current.isDateInYesterday(objective.date) {
@@ -77,6 +77,10 @@ final class DailyObjectiveManager: ObservableObject {
         if let objective = currentObjective {
             completedObjectives.append(objective)
         }
+    }
+    
+    func assignInitialObjective() {
+        currentObjective = createNewObjective()
     }
     
     private func createNewObjective() -> DailyObjective {
@@ -92,5 +96,11 @@ final class DailyObjectiveManager: ObservableObject {
             type: randomType,
             date: Date()
         )
+    }
+    
+    func resetObjectives() {
+        currentObjective = nil
+        completedObjectives = []
+        assignInitialObjective()
     }
 }
