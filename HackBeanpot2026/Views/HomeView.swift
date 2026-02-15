@@ -69,6 +69,9 @@ struct HomeView: View {
     @State private var showTaskAssigner: Bool = false
     @State private var showInventory: Bool = false
     
+    // Accessory positioning helper
+    private let accessoryManager = AnimalAccessoryManager()
+    
     enum ResetType: String, CaseIterable {
         case tasks = "Tasks"
         case money = "Money"
@@ -80,6 +83,21 @@ struct HomeView: View {
     
     private var animal: Animal? {
         AnimalManager.shared.animal
+    }
+    
+    // Convenience to get current animal type
+    private var currentAnimalType: AnimalType {
+        AnimalManager.shared.animal.type
+    }
+    
+    // Equipped accessories from inventory
+    private var equippedAccessories: [AccessoryType] {
+        AnimalManager.shared.inventoryManager
+            .equippedItems
+            .compactMap { item in
+                if case .accessory(let type) = item.itemType { return type }
+                return nil
+            }
     }
     
     var body: some View {
@@ -144,6 +162,7 @@ struct HomeView: View {
                 
                 Spacer()
                 
+                // Animal + Accessories share the same animated vertical offset
                 ZStack {
                     Image(animationManager.showState1 ? homeViewModel.getAnimalImages().0 : homeViewModel.getAnimalImages().1)
                         .resizable()
@@ -153,7 +172,7 @@ struct HomeView: View {
                         .onAppear {
                             withAnimation(
                                 .easeInOut(duration: 3)
-                                .repeatForever(autoreverses: true)
+                                    .repeatForever(autoreverses: true)
                             ) {
                                 yOffset = -15
                             }
@@ -173,6 +192,20 @@ struct HomeView: View {
                                 }
                             }
                         }
+                    
+                    // Overlay all equipped accessories with per-animal positioning and bobbing
+                    ForEach(equippedAccessories, id: \.self) { accessory in
+                        if let pos = accessoryManager.getAccessoryPosition(for: accessory, animalType: currentAnimalType) {
+                            Image(accessory.rawValue)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: accessoryImageSize(for: accessory), height: accessoryImageSize(for: accessory))
+                                // Base placement relative to animal center
+                                .offset(x: pos.xOffset, y: pos.yOffset)
+                                // Apply the same animated vertical motion
+                                .offset(y: yOffset)
+                        }
+                    }
                 }
                 
                 Spacer()
@@ -227,6 +260,15 @@ struct HomeView: View {
             }
         } message: {
             Text("Are you sure you want to reset \(resetType?.rawValue.lowercased() ?? "")? This action cannot be undone.")
+        }
+    }
+    
+    // Size tweaks per accessory; adjust as needed
+    private func accessoryImageSize(for accessory: AccessoryType) -> CGFloat {
+        switch accessory {
+        case .fedora: return 100
+        case .sunglasses: return 90
+        case .tie, .bowtie: return 80
         }
     }
     

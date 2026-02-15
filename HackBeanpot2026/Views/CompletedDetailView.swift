@@ -6,19 +6,6 @@
 import SwiftUI
 import UIKit
 
-// Helper to choose a hunger icon with fallbacks across OS versions.
-private func hungerSymbolName() -> String {
-    if UIImage(systemName: "fork.knife") != nil {
-        return "fork.knife"
-    } else if UIImage(systemName: "bone.fill") != nil {
-        return "bone.fill"
-    } else if UIImage(systemName: "drumstick.fill") != nil {
-        return "drumstick.fill"
-    } else {
-        return "fork.knife"
-    }
-}
-
 struct CompletedDetailView: View {
     let completed: CompletedTask
     
@@ -54,17 +41,23 @@ struct CompletedDetailView: View {
                     Text("Rewards")
                         .font(.headline)
                     HStack {
-                        Image(systemName: "heart.fill").foregroundColor(.red)
+                        Image("health").resizable()
+                            .scaledToFit()
+                            .frame(width: 40, height: 40)
                         Text("Health +\(completed.habit.healthIncrease)")
                         Spacer()
                     }
                     HStack {
-                        Image(systemName: "face.smiling").foregroundColor(.orange)
+                        Image("happiness").resizable()
+                            .scaledToFit()
+                            .frame(width: 40, height: 40)
                         Text("Happiness +\(completed.habit.happinessIncrease)")
                         Spacer()
                     }
                     HStack {
-                        Image(systemName: hungerSymbolName()).foregroundColor(.blue)
+                        Image("hunger").resizable()
+                            .scaledToFit()
+                            .frame(width: 40, height: 40)
                         Text("Hunger +\(completed.habit.hungerIncrease)")
                         Spacer()
                     }

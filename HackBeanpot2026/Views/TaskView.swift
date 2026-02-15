@@ -7,17 +7,6 @@ import SwiftUI
 import Combine
 import UIKit
 
-private func hungerSymbolName() -> String {
-    // Prefer "bone.fill"; if unavailable on this OS, fall back to "fork.knife"
-    if UIImage(systemName: "bone.fill") != nil {
-        return "bone.fill"
-    } else if UIImage(systemName: "drumstick.fill") != nil {
-        return "drumstick.fill"
-    } else {
-        return "fork.knife"
-    }
-}
-
 struct TaskView: View {
     let task: HabitTask
     var onComplete: (() -> Void)? = nil
@@ -77,24 +66,27 @@ struct TaskView: View {
                             .font(.caption)
                             .foregroundColor(.orange)
                     } icon: {
-                        Image(systemName: "face.smiling")
-                            .foregroundColor(.orange)
+                        Image("happiness").resizable()
+                            .scaledToFit()
+                            .frame(width: 40, height: 40)
                     }
                     Label {
                         Text("\(task.habit.healthIncrease)")
                             .font(.caption)
                             .foregroundColor(.red)
                     } icon: {
-                        Image(systemName: "heart.fill")
-                            .foregroundColor(.red)
+                        Image("health").resizable()
+                            .scaledToFit()
+                            .frame(width: 40, height: 40)
                     }
                     Label {
                         Text("\(task.habit.hungerIncrease)")
                             .font(.caption)
                             .foregroundColor(.blue)
                     } icon: {
-                        Image(systemName: hungerSymbolName())
-                            .foregroundColor(.blue)
+                        Image("hunger").resizable()
+                            .scaledToFit()
+                            .frame(width: 40, height: 40)
                     }
                 }
             }
@@ -150,17 +142,23 @@ private struct PointsBreakdownSheet: View {
 
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Image(systemName: "heart.fill").foregroundColor(.red)
+                    Image("health").resizable()
+                        .scaledToFit()
+                        .frame(width: 40, height: 40)
                     Text("Health +\(habit.healthIncrease)")
                         .font(.headline)
                 }
                 HStack {
-                    Image(systemName: "face.smiling").foregroundColor(.orange)
+                    Image("happiness").resizable()
+                        .scaledToFit()
+                        .frame(width: 40, height: 40)
                     Text("Happiness +\(habit.happinessIncrease)")
                         .font(.headline)
                 }
                 HStack {
-                    Image(systemName: hungerSymbolName()).foregroundColor(.blue)
+                    Image("hunger").resizable()
+                        .scaledToFit()
+                        .frame(width: 40, height: 40)
                     Text("Hunger +\(habit.hungerIncrease)")
                         .font(.headline)
                 }
