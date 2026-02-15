@@ -44,7 +44,16 @@ final class AnimalManager {
     private(set) var purchaseHistory: [PurchaseRecord] = []
     
     // Additional state used by objectives/UI
-    private(set) var selectedBackground: BackgroundType? = .livingRoom
+    private(set) var selectedBackground: BackgroundType? = .livingRoom {
+        didSet {
+            // Persist immediately and notify observers via @Observable
+            saveState()
+        }
+    }
+    
+    var currentBackground: BackgroundType {
+        selectedBackground ?? .livingRoom
+    }
     
     // MARK: - UserDefaults Keys
     private enum UserDefaultsKeys {
@@ -54,6 +63,7 @@ final class AnimalManager {
         static let hunger = "hunger"
         static let coins = "coins"
         static let purchaseHistory = "purchaseHistory"
+        static let selectedBackground = "selectedBackground"
         
         // Task Manager keys
         static let activeTasks = "activeTasks"
@@ -81,6 +91,14 @@ final class AnimalManager {
             self.purchaseHistory = decodedHistory
         } else {
             self.purchaseHistory = []
+        }
+        
+        // Load selected background
+        if let bgString = UserDefaults.standard.string(forKey: UserDefaultsKeys.selectedBackground),
+           let bg = BackgroundType(rawValue: bgString) {
+            self.selectedBackground = bg
+        } else {
+            self.selectedBackground = .livingRoom
         }
         
         // Create animal from saved data
@@ -163,6 +181,10 @@ final class AnimalManager {
             }
             animal.type = upgrade.asAnimalType
 
+        case .background(let bg):
+            selectedBackground = bg
+            // Buying a background does not change animal stats
+            
         default:
             apply(levelIncrease: item.increase)
         }
@@ -215,6 +237,11 @@ final class AnimalManager {
         UserDefaults.standard.set(animal.status.health.value, forKey: UserDefaultsKeys.health)
         UserDefaults.standard.set(animal.status.hunger.value, forKey: UserDefaultsKeys.hunger)
         UserDefaults.standard.set(coins, forKey: UserDefaultsKeys.coins)
+        
+        // Save selected background
+        if let bg = selectedBackground {
+            UserDefaults.standard.set(bg.rawValue, forKey: UserDefaultsKeys.selectedBackground)
+        }
         
         // Save purchase history
         if let historyData = try? JSONEncoder().encode(purchaseHistory) {
