@@ -311,7 +311,7 @@ struct HomeView: View {
         // Reset to a known baseline and start a repeating animation so new overlays pick it up
         yOffset = 0
         withAnimation(
-            .easeInOut(duration: 6).speed(2)
+            .linear(duration: 3)
                 .repeatForever(autoreverses: true)
         ) {
             yOffset = -15
