@@ -8,6 +8,7 @@
 //  - Active tasks and completed tasks from TaskManager
 //  - Task cooldowns to prevent duplicate tasks
 //  - Current and completed objectives from DailyObjectiveManager
+//  - User inventory through InventoryManager (prevents duplicate purchases)
 //  
 //  All data is automatically saved to UserDefaults when modified.
 //
@@ -41,10 +42,11 @@ final class AnimalManager {
     private(set) var coins: Int
     var taskManager: TaskManager
     var objectivesManager: DailyObjectiveManager
+    var inventoryManager: InventoryManager
     private(set) var purchaseHistory: [PurchaseRecord] = []
     
     // Additional state used by objectives/UI
-    private(set) var selectedBackground: BackgroundType? = .livingRoom
+    var selectedBackground: BackgroundType? = .livingRoom
     
     // MARK: - UserDefaults Keys
     private enum UserDefaultsKeys {
@@ -96,6 +98,7 @@ final class AnimalManager {
         // Initialize managers
         self.taskManager = TaskManager()
         self.objectivesManager = DailyObjectiveManager()
+        self.inventoryManager = InventoryManager()
         
         // Load task manager data
         if let activeTasksData = UserDefaults.standard.data(forKey: UserDefaultsKeys.activeTasks),
@@ -135,25 +138,49 @@ final class AnimalManager {
         // Set up the bidirectional relationship
         self.taskManager.animalManager = self
         self.objectivesManager.animalManager = self
+        self.inventoryManager.animalManager = self
+        
+        // Sync selectedBackground with equipped background from inventory
+        if let equippedBackground = inventoryManager.equippedBackground,
+           case .background(let backgroundType) = equippedBackground.shopItem {
+            self.selectedBackground = backgroundType
+        } else {
+            // If no background is equipped, add and equip the default living room
+            let defaultBackground = ShopItem.background(.livingRoom)
+            inventoryManager.addItem(defaultBackground, isEquipped: true)
+            self.selectedBackground = .livingRoom
+        }
     }
 
     enum PurchaseError: Error {
         case insufficientFunds
         case invalidUpgrade
+        case alreadyOwned
     }
 
     func canBuy(_ item: ShopItem) -> Bool {
+        // Check if we have enough coins
+        guard coins >= item.cost else { return false }
+        
+        // Check inventory restrictions
+        guard inventoryManager.canPurchase(item) else { return false }
+        
+        // Check upgrade-specific logic
         switch item {
         case .upgrade(let upgrade):
-            return coins >= item.cost && upgrade.isUnlocked(animal.type)
+            return upgrade.isUnlocked(animal.type)
         default:
-            return coins >= item.cost
+            return true
         }
     }
 
     func buy(_ item: ShopItem) throws(PurchaseError) {
         guard coins >= item.cost else {
             throw PurchaseError.insufficientFunds
+        }
+        
+        guard inventoryManager.canPurchase(item) else {
+            throw PurchaseError.alreadyOwned
         }
 
         switch item {
@@ -162,9 +189,28 @@ final class AnimalManager {
                 throw PurchaseError.invalidUpgrade
             }
             animal.type = upgrade.asAnimalType
+            // Add to inventory and mark as equipped (since it's the current animal)
+            inventoryManager.addItem(item, isEquipped: true)
+
+        case .background:
+            // Add to inventory
+            inventoryManager.addItem(item)
+            // Automatically equip the new background
+            if let inventoryItem = inventoryManager.items.last {
+                inventoryManager.setBackground(inventoryItem)
+            }
+            apply(levelIncrease: item.increase)
+
+        case .fedora, .sunglasses, .tie, .bowtie:
+            // Add accessory to inventory (not automatically equipped)
+            inventoryManager.addItem(item)
+            apply(levelIncrease: item.increase)
 
         default:
+            // Food and other consumable items
             apply(levelIncrease: item.increase)
+            // Food items are consumable and don't get added to inventory permanently
+            // But we can track them for purchase history
         }
 
         coins -= item.cost
@@ -194,6 +240,23 @@ final class AnimalManager {
         animal.status.happiness.value = max(minVal, min(maxVal, animal.status.happiness.value))
         animal.status.health.value    = max(minVal, min(maxVal, animal.status.health.value))
         animal.status.hunger.value    = max(minVal, min(maxVal, animal.status.hunger.value))
+    }
+    
+    // MARK: - Inventory Access Methods
+    
+    /// Gets the currently equipped accessories
+    var equippedAccessories: [InventoryItem] {
+        return inventoryManager.equippedAccessories
+    }
+    
+    /// Gets the currently equipped background
+    var equippedBackground: InventoryItem? {
+        return inventoryManager.equippedBackground
+    }
+    
+    /// Checks if the user owns a specific item
+    func owns(_ item: ShopItem) -> Bool {
+        return inventoryManager.owns(item)
     }
     
     // MARK: - Task Completion Rewards
@@ -309,6 +372,13 @@ final class AnimalManager {
         // Clear purchase history since animal progression is reset
         purchaseHistory.removeAll()
         
+        // Clear inventory
+        inventoryManager.clearInventory()
+        
+        // Re-add the default living room background
+        let defaultBackground = ShopItem.background(.livingRoom)
+        inventoryManager.addItem(defaultBackground, isEquipped: true)
+        
         // Clear task and objective data
         taskManager.clearAllTasks()
         objectivesManager.resetObjectives()
@@ -330,6 +400,16 @@ final class AnimalManager {
     /// Clears all objective data (for dev mode)
     func resetObjectives() {
         objectivesManager.resetObjectives()
+        saveState()
+    }
+    
+    /// Clears all inventory data (for dev mode)
+    func resetInventory() {
+        inventoryManager.clearInventory()
+        // Re-add the default living room background
+        let defaultBackground = ShopItem.background(.livingRoom)
+        inventoryManager.addItem(defaultBackground, isEquipped: true)
+        selectedBackground = .livingRoom
         saveState()
     }
 }

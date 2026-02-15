@@ -121,6 +121,8 @@ struct ShopView: View {
                                             errorMessage = "Not enough coins."
                                         } catch AnimalManager.PurchaseError.invalidUpgrade {
                                             errorMessage = "This upgrade isn't unlocked yet."
+                                        } catch AnimalManager.PurchaseError.alreadyOwned {
+                                            errorMessage = "You already own this item."
                                         } catch {
                                             errorMessage = "Couldn't complete purchase."
                                         }
