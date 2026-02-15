@@ -195,7 +195,10 @@ struct HomeView: View {
                                 Image(accessory.rawValue)
                                     .resizable()
                                     .scaledToFit()
-                                    .frame(width: accessoryImageSize(for: accessory), height: accessoryImageSize(for: accessory))
+                                    .frame(
+                                        width: pos.width ?? accessoryImageSize(for: accessory),
+                                        height: pos.width ?? accessoryImageSize(for: accessory)
+                                    )
                                     // Base placement relative to animal center
                                     .offset(x: pos.xOffset, y: pos.yOffset)
                             }
@@ -600,3 +603,4 @@ private struct StatBar: View {
         .frame(height: 24)
     }
 }
+

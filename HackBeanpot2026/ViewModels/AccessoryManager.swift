@@ -1,11 +1,13 @@
 import Foundation
 import SwiftUI
 
-// Struct to hold accessory positions (x, y offset)
+// Struct to hold accessory positions (x, y offset) and optional width override
 struct AccessoryPosition {
     var xOffset: CGFloat
     var yOffset: CGFloat
+    var width: CGFloat? = nil
 }
+
 struct Accessory {
     var type: AccessoryType
     var image: String
@@ -24,12 +26,12 @@ class AnimalAccessoryManager {
         ],
         
         .sunglasses: [
-            .blob: AccessoryPosition(xOffset: 0, yOffset: -40),
-            .fish: AccessoryPosition(xOffset: 15, yOffset: -55),
-            .gecko: AccessoryPosition(xOffset: 10, yOffset: -40),
-            .cat: AccessoryPosition(xOffset: 0, yOffset: -40),
-            .dog: AccessoryPosition(xOffset: 0, yOffset: -40),
-            .unicorn: AccessoryPosition(xOffset: 0, yOffset: -50)
+            .blob: AccessoryPosition(xOffset: -12, yOffset: -8, width: 125),
+            .fish: AccessoryPosition(xOffset: -50, yOffset: 0, width: 88),
+            .gecko: AccessoryPosition(xOffset: -20, yOffset: -65, width: 150),
+            .cat: AccessoryPosition(xOffset: 7, yOffset: -30, width: 128),
+            .dog: AccessoryPosition(xOffset: 5, yOffset: -30, width: 130),
+            .unicorn: AccessoryPosition(xOffset: -28, yOffset: -20, width: 115)
         ],
         
         .bowtie: [
@@ -55,3 +57,4 @@ class AnimalAccessoryManager {
         return accessoryPositions[accessoryType]?[animalType]
     }
 }
+
