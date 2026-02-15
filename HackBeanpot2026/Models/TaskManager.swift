@@ -122,7 +122,8 @@ final class TaskManager: ObservableObject {
             return minute == 0 && hour % 2 == 0
         case .outside:
             // Midday: 10:00–16:00
-            return (10...16).contains(hour)
+//            return (10...16).contains(hour)
+            return (1...24).contains(hour)
         }
     }
 
