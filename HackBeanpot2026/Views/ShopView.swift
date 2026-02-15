@@ -317,15 +317,16 @@ struct ShopItemCard: View {
                 Spacer()
                 
                 if isOwned {
-                    Text("Owned")
-                        .font(compact ? .caption2 : .subheadline)
+                    Text("owned")
+                        .font(.body)
                         .foregroundColor(.secondary)
                         .padding(.horizontal, compact ? 8 : 12)
                         .padding(.vertical, compact ? 4 : 8)
                         .background(Color(.secondarySystemBackground))
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                 } else {
-                    Button("Buy", action: onBuy)
+                    Button("buy", action: onBuy)
+                        .font(.body)
                         .buttonStyle(.borderedProminent)
                         .controlSize(compact ? .small : .regular)
                         .disabled(!canBuy)
