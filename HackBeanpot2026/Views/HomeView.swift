@@ -100,7 +100,7 @@ struct HomeView: View {
                 Spacer()
             }
 
-                    Image(animationManager.showState1 ? testViewModel.getAnimalImages().0 : testViewModel.getAnimalImages().1)
+                    Image(animationManager.showState1 ? homeViewModel.getAnimalImages().0 : homeViewModel.getAnimalImages().1)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 250, height: 250)
