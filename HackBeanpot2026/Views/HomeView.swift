@@ -117,17 +117,17 @@ struct HomeView: View {
                             StatBar(value: Double(animal.status.health.value),
                                     color: .red,
                                     icon: Image("health"),
-                                    iconWidth: 40)
+                                    iconWidth: 35)
                             
                             StatBar(value: Double(animal.status.hunger.value),
                                     color: .blue,
                                     icon: Image("hunger"),
-                                    iconWidth: 40)
+                                    iconWidth: 35)
                             
                             StatBar(value: Double(animal.status.happiness.value),
                                     color: .orange,
                                     icon: Image("happiness"),
-                                    iconWidth: 30)
+                                    iconWidth: 25)
                         }
                         .frame(width: 315)
                         .padding(12)
@@ -587,11 +587,12 @@ struct TaskAssignerOverlay: View {
                     }
                 }
                 
-                Button("Close") {
+                Button("close") {
                     isPresented = false
                     TabBarVisibilityController.showTabBarAnimated()
                 }
                 .padding()
+                .font(.h3)
                 .background(.secondary)
                 .foregroundColor(.primary)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -639,19 +640,18 @@ struct InventoryOverlay: View {
                 .onTapGesture {
                     isPresented = false
                 }
-            
+            Spacer()
             VStack(spacing: 0) {
-                // Custom header
                 HStack {
                     Text("Inventory")
-                        .font(.title2)
-                        .fontWeight(.semibold)
+                        .font(.h3)
                     
                     Spacer()
                     
-                    Button("Close") {
+                    Button("close") {
                         isPresented = false
                     }
+                    .font(.h3)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(.quaternary)
@@ -678,10 +678,10 @@ private struct StatBar: View {
     let iconWidth: CGFloat
     
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 2) {
             ZStack {
                 Circle()
-                    .fill(Color.white.opacity(0.7)).frame(width: 32, height: 32)
+                    .fill(Color.white.opacity(0.7)).frame(width: 28, height: 28)
                     .overlay(
                                 Circle()
                                     .stroke(Color.black, lineWidth: 1)
@@ -697,24 +697,21 @@ private struct StatBar: View {
                 GeometryReader { geo in
                     Rectangle()
                         .fill(color)
-                        .frame(width: max((geo.size.width - 11 ) * CGFloat(value / 100), 0), height: 12)
+                        .frame(width: max((geo.size.width - 24 ) * CGFloat(value / 100), 0), height: 12)
                         .padding(.horizontal, 5)
                         .frame(height: 12)
                 }
                 Image("bar")
                     .resizable()
                     .aspectRatio(contentMode: .fill)
-                    .frame(height: 12)
+                    .frame(width: 200, height: 12)
                     .offset(y: 4)
-                
-                
             }
             .frame(height: 12)
             
             Text("\(Int(value))/100")
-                .font(.caption)
+                .font(.h3)
                 .foregroundColor(.black)
-                .frame(width: 50, alignment: .trailing)
         }
         .frame(height: 24)
     }
@@ -828,7 +825,7 @@ struct GameOverOverlay: View {
                         .foregroundColor(.black)
                     
                     Text("Your pet's vital stats have dropped to zero.")
-                        .font(.habitTitle)
+                        .font(.body)
                         .foregroundColor(.black)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
@@ -842,7 +839,7 @@ struct GameOverOverlay: View {
                 
                 VStack(spacing: 16) {
                     Text("Final Stats:")
-                        .font(.habitTitle)
+                        .font(.body)
                         .foregroundColor(.black)
                     
                     VStack(spacing: 8) {
@@ -908,11 +905,12 @@ private struct InventoryPopoverContent: View {
             // Header (only this consumes its own height)
             HStack {
                 Text("Inventory")
-                    .font(.headline)
+                    .font(.h2)
                 Spacer()
-                Button("Close") {
+                Button("close") {
                     isPresented = false
                 }
+                .font(.h3)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(.quaternary)

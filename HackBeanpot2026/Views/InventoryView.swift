@@ -20,7 +20,8 @@ struct InventoryView: View {
             // Category picker
             Picker("Category", selection: $selectedCategory) {
                 ForEach(InventoryCategory.allCases, id: \.self) { category in
-                    Text(category.rawValue).tag(category)
+                    Text(category.rawValue)
+                        .tag(category)
                 }
             }
             .pickerStyle(.segmented)
@@ -51,11 +52,11 @@ struct InventoryView: View {
                         .foregroundColor(.secondary)
                     
                     Text("No \(selectedCategory.rawValue.lowercased()) yet")
-                        .font(.headline)
+                        .font(.h3)
                         .foregroundColor(.secondary)
                     
                     Text("Visit the shop to purchase items!")
-                        .font(.subheadline)
+                        .font(.body)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                 }
@@ -106,7 +107,7 @@ struct InventoryItemCard: View {
             
             // Item name
             Text(item.itemType.displayName)
-                .font(.caption)
+                .font(.body)
                 .fontWeight(.medium)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
@@ -115,7 +116,7 @@ struct InventoryItemCard: View {
             // Equip/Unequip button (animals and backgrounds can't be unequipped, only switched)
             Button(action: item.isEquipped ? (cannotUnequip ? {} : onUnequip) : onEquip) {
                 Text(buttonText)
-                    .font(.caption2)
+                    .font(.body)
                     .fontWeight(.medium)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
@@ -189,7 +190,7 @@ struct InventoryItemCard: View {
         case .background(let backgroundType):
             Image(backgroundType.imageName)
                 .resizable()
-                .scaledToFill()
+                .scaledToFit()
                 .clipShape(RoundedRectangle(cornerRadius: 8))
         case .accessory(let accessoryType):
             Image(accessoryType.rawValue)
