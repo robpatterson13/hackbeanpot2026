@@ -189,9 +189,9 @@ struct ShopView: View {
         case .upgrades:
             return -shelfHeight * 0.15 // move pets up a bit more
         case .accessories:
-            return -shelfHeight * 0.08 // middle rows up slightly
+            return shelfHeight * -0.03 // nudge accessories slightly down (higher than before)
         case .food:
-            return -shelfHeight * 0.08 // middle rows up slightly
+            return shelfHeight * 0.04 // move food down a bit more
         case .backgrounds:
             return 0 // align backgrounds with others
         }
