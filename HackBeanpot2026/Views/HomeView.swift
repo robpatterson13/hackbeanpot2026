@@ -75,22 +75,26 @@ struct HomeView: View {
                         if let animal {
                             StatBar(value: 20 /*Double(animal.status.health.value)*/,
                                     color: .red,
-                                    systemImage: "heart.fill")
+                                    icon: Image("health"),
+                                    iconWidth: 40)
                             
                             StatBar(value: Double(animal.status.hunger.value),
                                     color: .blue,
-                                    systemImage: "fork.knife")
+                                    icon: Image("hunger"),
+                                    iconWidth: 40)
                             
                             StatBar(value: Double(animal.status.happiness.value),
                                     color: .orange,
-                                    systemImage: "face.smiling.fill")
+                                    icon: Image("happiness"),
+                                    iconWidth: 30)
                         }
                     }
                     .frame(width: 315)
+                    .padding(12)
                     .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.brown)
-                            )
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(red: 1.0, green: 1.0, blue: 1.0, opacity: 0.5))
+                    )
                 }
                 
                 Spacer()
@@ -102,12 +106,11 @@ struct HomeView: View {
                         .frame(width: 250, height: 250)
                         .offset(y: yOffset)
                         .onAppear {
-                            // Only setup bounce animation, timer is handled by AnimationManager
                             withAnimation(
                                 .easeInOut(duration: 3)
                                 .repeatForever(autoreverses: true)
                             ) {
-                                yOffset = -15 // Bounce up 15 points
+                                yOffset = -15
                             }
                         }
             Spacer()
@@ -119,28 +122,48 @@ struct HomeView: View {
 private struct StatBar: View {
     let value: Double
     let color: Color
-    let systemImage: String
+    let icon: Image
+    let iconWidth: CGFloat
     
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: systemImage)
-                .foregroundColor(color)
-                .frame(width: 20)
+            ZStack {
+                Circle()
+                    .fill(Color.white.opacity(0.7)).frame(width: 32, height: 32)
+                    .overlay(
+                                Circle()
+                                    .stroke(Color.black, lineWidth: 1)
+                            )
+                icon
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: iconWidth, height: iconWidth)
+            }
+            .frame(width: 40, height: 40, alignment: .center)
             
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(Color.white.opacity(0.3))
-                    
-                    Capsule()
+            ZStack(alignment: .leading) {
+                GeometryReader { geo in
+                    Rectangle()
                         .fill(color)
-                        .frame(width: geo.size.width * CGFloat(value / 100))
+                        .frame(width: max((geo.size.width - 11 ) * CGFloat(value / 100), 0), height: 12)
+                        .padding(.horizontal, 5)
+                        .frame(height: 12)
                 }
+                Image("bar")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(height: 12)
+                    .offset(y: 4)
+                
+                
             }
             .frame(height: 12)
-            Text("\(Int(value))/100").font(.caption).foregroundColor(.white).frame(width: 100)
+            
+            Text("\(Int(value))/100")
+                .font(.caption)
+                .foregroundColor(.black)
+                .frame(width: 50, alignment: .trailing)
         }
-        .frame(height: 20)
-
+        .frame(height: 24)
     }
 }
