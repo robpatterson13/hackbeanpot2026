@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-struct CompletedTask: Identifiable, Equatable {
+struct CompletedTask: Identifiable, Equatable, Codable {
     let id: UUID
     let sourceTaskID: UUID
     let habit: Habit
@@ -28,8 +28,8 @@ struct CompletedTask: Identifiable, Equatable {
 
 @Observable
 final class TaskManager: ObservableObject {
-    private(set) var tasks: [HabitTask] = []
-    private(set) var completedTasks: [CompletedTask] = []
+    var tasks: [HabitTask] = []
+    var completedTasks: [CompletedTask] = []
 
     weak var animalManager: AnimalManager?
     private var timerCancellable: AnyCancellable?
@@ -72,6 +72,9 @@ final class TaskManager: ObservableObject {
 
         // Apply rewards to the pet
         applyRewards(for: task.habit)
+        
+        // Trigger save in the animal manager
+        animalManager?.save()
     }
 
     func removeExpiredTasks(now: Date = Date()) {
@@ -222,5 +225,17 @@ final class TaskManager: ObservableObject {
         
         // Sort by expiration
         tasks.sort { $0.expiration < $1.expiration }
+    }
+    
+    // MARK: - Persistence Support Methods
+    
+    /// Returns the current cooldowns dictionary for persistence
+    func getCooldowns() -> [Habit: Date] {
+        return cooldownUntil
+    }
+    
+    /// Sets a cooldown for a specific habit (used during initialization from persistent data)
+    func setCooldown(for habit: Habit, until date: Date) {
+        cooldownUntil[habit] = date
     }
 }
