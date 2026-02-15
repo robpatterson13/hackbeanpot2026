@@ -63,16 +63,20 @@ struct ShopView: View {
                 GeometryReader { proxy in
                     // Adjust these to align rows with the planks in your shelves image
                     let topInset: CGFloat = 50
-                    let bottomInset: CGFloat = 90
+                    let bottomInset: CGFloat = 95
                     let interShelfSpacing: CGFloat = 8
                     let available = proxy.size.height - topInset - bottomInset - interShelfSpacing * 3
                     let shelfHeight = max(36, available / 4)
 
                     VStack(spacing: interShelfSpacing) {
                         shelfRow(category: .upgrades, items: viewModel.allItems.filter { $0.category == .upgrades }, shelfHeight: shelfHeight)
+                            .offset(y: verticalOffset(for: .upgrades, shelfHeight: shelfHeight))
                         shelfRow(category: .accessories, items: viewModel.allItems.filter { $0.category == .accessories }, shelfHeight: shelfHeight)
+                            .offset(y: verticalOffset(for: .accessories, shelfHeight: shelfHeight))
                         shelfRow(category: .food, items: viewModel.allItems.filter { $0.category == .food }, shelfHeight: shelfHeight)
+                            .offset(y: verticalOffset(for: .food, shelfHeight: shelfHeight))
                         shelfRow(category: .backgrounds, items: viewModel.allItems.filter { $0.category == .backgrounds }, shelfHeight: shelfHeight)
+                            .offset(y: verticalOffset(for: .backgrounds, shelfHeight: shelfHeight))
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     .padding(.top, topInset)
@@ -82,11 +86,17 @@ struct ShopView: View {
                 // Coins header overlay on top
                 VStack {
                     HStack {
-                        Label("Coins: \(viewModel.coins)", systemImage: "creditcard")
-                            .font(.headline)
-                            .padding(8)
-                            .background(.ultraThinMaterial, in: Capsule())
                         Spacer()
+                        HStack(spacing: 6) {
+                            Image("coin") // replace with your asset name if different
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 30, height: 30)
+                            Text("Coins: \(viewModel.coins)")
+                                .font(.headline)
+                        }
+                        .padding(8)
+                        .background(.ultraThinMaterial, in: Capsule())
                     }
                     .padding(.horizontal)
                     .padding(.top, 8)
@@ -123,7 +133,7 @@ struct ShopView: View {
     @ViewBuilder
     private func shelfRow(category: ShopCategory, items: [ShopItem], shelfHeight: CGFloat) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
+            HStack(spacing: tileSpacing(for: category)) {
                 ForEach(Array(items.enumerated()), id: \.offset) { _, item in
                     let sizing = tileSizing(for: category)
                     let base = shelfHeight * sizing.scale
@@ -143,19 +153,49 @@ struct ShopView: View {
         .frame(height: shelfHeight)
     }
     
+    /// Controls per-category thumbnail sizing on each shelf.
+    /// - scale: Proportion of the shelf row height used for this category.
+    /// - min/max: Clamps the resulting size across devices. Increase `scale` or `max` to make a category larger.
     private func tileSizing(for category: ShopCategory) -> (scale: CGFloat, min: CGFloat, max: CGFloat) {
         // Adjust these values to tune each category's thumbnail size
         switch category {
         case .upgrades:
             // Pets slightly larger
-            return (scale: 0.70, min: 68, max: 112)
+            return (scale: 0.80, min: 68, max: 120)
         case .accessories:
-            return (scale: 0.60, min: 56, max: 96)
+            return (scale: 0.70, min: 56, max: 120)
         case .food:
-            return (scale: 0.55, min: 52, max: 92)
+            return (scale: 0.60, min: 52, max: 120)
         case .backgrounds:
             // Backgrounds slightly smaller
-            return (scale: 0.50, min: 44, max: 84)
+            return (scale: 0.50, min: 40, max: 70)
+        }
+    }
+    
+    /// Per-category horizontal spacing between thumbnails.
+    /// Increase spacing for categories that feel too tight (e.g., backgrounds).
+    private func tileSpacing(for category: ShopCategory) -> CGFloat {
+        switch category {
+        case .backgrounds:
+            return 60 // more breathing room for backgrounds
+        case .upgrades, .accessories, .food:
+            return 8
+        }
+    }
+    
+    /// Per-category vertical adjustment to fine-tune alignment with shelf planks.
+    /// Negative values move a row up; positive values move it down.
+    /// Tip: Start small (e.g., -0.08) and adjust.
+    private func verticalOffset(for category: ShopCategory, shelfHeight: CGFloat) -> CGFloat {
+        switch category {
+        case .upgrades:
+            return -shelfHeight * 0.15 // move pets up a bit more
+        case .accessories:
+            return -shelfHeight * 0.08 // middle rows up slightly
+        case .food:
+            return -shelfHeight * 0.08 // middle rows up slightly
+        case .backgrounds:
+            return 0 // align backgrounds with others
         }
     }
     
@@ -168,6 +208,7 @@ struct ShopView: View {
                     .scaledToFill()
                     .frame(width: size, height: size)
                     .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.white.opacity(0.9), lineWidth: 1))
             } else if let name = shopAssetName(for: item) {
                 Image(name)
                     .resizable()
@@ -210,12 +251,14 @@ struct ShopItemCard: View {
     let canBuy: Bool
     let onBuy: () -> Void
     let compact: Bool
+    let imageHeight: CGFloat?
 
-    init(item: ShopItem, canBuy: Bool, onBuy: @escaping () -> Void, compact: Bool = false) {
+    init(item: ShopItem, canBuy: Bool, onBuy: @escaping () -> Void, compact: Bool = false, imageHeight: CGFloat? = nil) {
         self.item = item
         self.canBuy = canBuy
         self.onBuy = onBuy
         self.compact = compact
+        self.imageHeight = imageHeight
     }
     
     var body: some View {
@@ -226,8 +269,9 @@ struct ShopItemCard: View {
                     .fill(Color(.secondarySystemBackground))
                 
                 contentImage
+                    .offset(y: compact ? -2 : -6)
             }
-            .frame(height: compact ? 50 : 110)
+            .frame(height: imageHeight ?? (compact ? 50 : 90))
             
             // Title and price
             Text(item.displayName)
@@ -236,7 +280,10 @@ struct ShopItemCard: View {
                 .minimumScaleFactor(0.8)
             
             HStack {
-                Image(systemName: "creditcard")
+                Image("coin")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 16, height: 16)
                 Text("\(item.cost)")
                 Spacer()
                 Button("Buy", action: onBuy)
@@ -260,15 +307,15 @@ struct ShopItemCard: View {
         case .background(let type):
             Image(type.imageName)
                 .resizable()
-                .scaledToFill()
+                .scaledToFit()
                 .clipShape(RoundedRectangle(cornerRadius: 8))
-                .padding(compact ? 8 : 16)
+                .padding(compact ? 6 : 20)
         default:
             if let assetName = shopAssetName(for: item) {
                 Image(assetName)
                     .resizable()
                     .scaledToFit()
-                    .padding(compact ? 8 : 16)
+                    .padding(compact ? 8 : 20)
             } else {
                 Image(systemName: item.iconSystemName ?? "bag")
                     .resizable()
@@ -289,9 +336,12 @@ struct ShopItemDetailSheet: View {
 
     var body: some View {
         NavigationView {
-            ScrollView {
-                ShopItemCard(item: item, canBuy: canBuy, onBuy: onBuy)
-                    .padding()
+            GeometryReader { geo in
+                ScrollView {
+                    ShopItemCard(item: item, canBuy: canBuy, onBuy: onBuy, compact: false, imageHeight: max(200, geo.size.height * 0.45))
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                }
             }
             .navigationTitle(item.displayName)
             .toolbar {
