@@ -32,11 +32,11 @@ class MainTabBarController: UITabBarController {
         let exploreNav = UINavigationController(rootViewController: exploreVC)
         exploreNav.tabBarItem = UITabBarItem(title: "Explore", image: UIImage(systemName: "magnifyingglass"), tag: 1)
         
-        let profileVC = ProfileViewController()
-        let profileNav = UINavigationController(rootViewController: profileVC)
-        profileNav.tabBarItem = UITabBarItem(title: "Profile", image: UIImage(systemName: "person"), tag: 2)
+        let shopVC = ShopViewController()
+        let shopNav = UINavigationController(rootViewController: shopVC)
+        shopNav.tabBarItem = UITabBarItem(title: "Shop", image: UIImage(systemName: "cart"), tag: 2)
         
-        viewControllers = [homeNav, exploreNav, profileNav] 
+        viewControllers = [homeNav, exploreNav, shopNav] 
     }
     
     private func setupCustomTabBar() {
