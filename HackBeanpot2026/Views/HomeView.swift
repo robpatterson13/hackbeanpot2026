@@ -34,10 +34,27 @@ class HomeViewModel {
             return ("", "")
         }
     }
+    
+    func getBackgroundImage() -> String {
+        switch animalManager?.selectedBackground {
+        case .city:
+            return "city"
+        case .desert:
+            return "desert"
+        case .forest:
+            return "forest"
+        case .ocean:
+            return "ocean"
+        case .livingRoom:
+            return "livingRoom"
+        case .none:
+            return ""
+        }
+    }
 }
 
 struct HomeView: View {
-    @State private var testViewModel: HomeViewModel = .init(animalManager: AnimalManager.shared)
+    @State private var homeViewModel: HomeViewModel = .init(animalManager: AnimalManager.shared)
     @State private var yOffset: CGFloat = 0
     @State private var animationManager = AnimationManager.shared
     @State private var isBlob: Bool = true
@@ -60,7 +77,7 @@ struct HomeView: View {
     
     var body: some View {
         ZStack {
-            Image("forest")
+            Image(homeViewModel.getBackgroundImage())
                 .resizable()
                 .ignoresSafeArea()
             
@@ -84,7 +101,7 @@ struct HomeView: View {
                 Spacer()
                 
                 ZStack {
-                    Image(animationManager.showState1 ? testViewModel.getAnimalImages().0 : testViewModel.getAnimalImages().1)
+                    Image(animationManager.showState1 ? homeViewModel.getAnimalImages().0 : homeViewModel.getAnimalImages().1)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 250, height: 250)

@@ -19,9 +19,9 @@ class CustomTabBar: UIView {
     private var selectedIndex: Int = 0
     
     private let tabItems = [
-        TabItem(title: "", icon: "home", selectedIcon: "house.fill"),
-        TabItem(title: "", icon: "tasks", selectedIcon: "magnifyingglass"),
-        TabItem(title: "", icon: "shop", selectedIcon: "person.fill")
+        TabItem(title: "", icon: "home", selectedIcon: "home"),
+        TabItem(title: "", icon: "tasks", selectedIcon: "tasks"),
+        TabItem(title: "", icon: "shop", selectedIcon: "shop")
     ]
     
     override init(frame: CGRect) {
@@ -46,6 +46,7 @@ class CustomTabBar: UIView {
         stackView.axis = .horizontal
         stackView.distribution = .fillEqually
         stackView.alignment = .center
+        stackView.spacing = -60
         stackView.translatesAutoresizingMaskIntoConstraints = false
         
         addSubview(stackView)
@@ -150,7 +151,7 @@ class CustomTabButton: UIButton {
                 self.iconImageView.image = UIImage(named: self.tabItem.icon)
                 self.iconImageView.tintColor = .systemBlue
                 self.customTitleLabel.textColor = .systemBlue
-                self.transform = CGAffineTransform(scaleX: 1.1, y: 1.1)
+                self.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
             } else {
                 self.iconImageView.image = UIImage(named: self.tabItem.icon)
                 self.iconImageView.tintColor = .systemGray
@@ -171,7 +172,7 @@ class CustomTabButton: UIButton {
         super.touchesEnded(touches, with: event)
         UIView.animate(withDuration: 0.1) {
             if self.iconImageView.tintColor == .systemBlue {
-                self.transform = CGAffineTransform(scaleX: 1.1, y: 1.1)
+                self.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
             } else {
                 self.transform = .identity
             }
@@ -182,7 +183,7 @@ class CustomTabButton: UIButton {
         super.touchesCancelled(touches, with: event)
         UIView.animate(withDuration: 0.1) {
             if self.iconImageView.tintColor == .systemBlue {
-                self.transform = CGAffineTransform(scaleX: 1.1, y: 1.1)
+                self.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
             } else {
                 self.transform = .identity
             }
