@@ -135,6 +135,30 @@ struct HomeView: View {
                 
                 Spacer()
                 
+                // Dev Mode Toggle Button (hidden until unlocked)
+                if devModeUnlocked {
+                    HStack {
+                        Spacer()
+                        Button("Dev Mode") {
+                            showDevMode.toggle()
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .padding(.trailing)
+                        .popover(isPresented: $showDevMode, arrowEdge: .top) {
+                            DevModePopoverContent(
+                                showResetAlert: $showResetAlert,
+                                resetType: $resetType,
+                                showCoinSetter: $showCoinSetter,
+                                showTaskAssigner: $showTaskAssigner
+                            )
+                        }
+                    }
+                    .padding(.top)
+                }
+                
                 // Animal + accessories move together using a time-based bobbing offset that doesn't depend on view state
                 TimelineView(.animation) { context in
                     let period: TimeInterval = 6.0
