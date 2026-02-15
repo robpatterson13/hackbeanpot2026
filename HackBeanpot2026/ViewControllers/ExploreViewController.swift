@@ -28,7 +28,6 @@ class ExploreViewController: UIViewController {
     
     private func setupUI() {
         view.backgroundColor = UIColor.systemBackground
-        title = "Objectives"
         
         // Create and configure the SwiftUI hosting controller to fill the entire screen
         let swiftUIHostingController = UIHostingController(rootView: ObjectivesAndTasksView(animalManager: AnimalManager.shared))

@@ -9,10 +9,11 @@ import SwiftUI
 
 extension Font {
     static func customFont(size: CGFloat) -> Font {
-        return .custom("AlmondMilky", size: size)
+        return .custom("Baby-Doll", size: size)
     }
     
-    static let habitTitle = Font.custom("AlmondMilky", size: 24)
-    static let habitBody = Font.custom("AlmondMilky", size: 16)
-    static let petName = Font.custom("AlmondMilky", size: 32)
+    static let habitTitle = Font.custom("Baby-Doll", size: 24)
+    static let body = Font.custom("Baby-Doll", size: 20)
+    static let petName = Font.custom("Baby-Doll", size: 32)
+    static let tabTitle = Font.custom("Baby-Doll", size: 10)
 }

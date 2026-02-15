@@ -78,7 +78,7 @@ enum UpgradeType: CaseIterable, Buyable, Codable {
     }
 }
 
-enum ShopItem: Buyable, Codable {
+enum ShopItem: Buyable, Codable, Equatable {
     case steak
     case fedora
     case sunglasses

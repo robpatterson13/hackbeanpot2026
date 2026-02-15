@@ -161,12 +161,19 @@ final class AnimalManager {
     }
 
     func canBuy(_ item: ShopItem) -> Bool {
-        switch item {
-        case .upgrade(let upgrade):
-            return coins >= item.cost && upgrade.isUnlocked(animal.type)
-        default:
-            return coins >= item.cost
+        guard coins >= item.cost else {
+            return false
         }
+        
+        if hasPurchased(item) {
+            return false
+        }
+        
+        if case .upgrade(let upgrade) = item {
+            return upgrade.isUnlocked(animal.type)
+        }
+        
+        return true
     }
 
     func buy(_ item: ShopItem) throws(PurchaseError) {
@@ -309,6 +316,10 @@ final class AnimalManager {
     func clearPurchaseHistory() {
         purchaseHistory.removeAll()
         saveState()
+    }
+    
+    func hasPurchased(_ item: ShopItem) -> Bool {
+        return purchaseHistory.contains { $0.item == item }
     }
     
     // MARK: - Developer Mode Reset Functions

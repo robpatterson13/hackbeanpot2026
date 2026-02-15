@@ -23,7 +23,6 @@ class ShopViewController: UIViewController {
     
     private func setupUI() {
         view.backgroundColor = .clear
-        title = "Shop"
         
         // Embed SwiftUI ShopView
         let hosting = UIHostingController(rootView: ShopView(animalManager: AnimalManager.shared))
