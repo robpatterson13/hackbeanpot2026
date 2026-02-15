@@ -42,10 +42,10 @@ enum UpgradeType: CaseIterable, Buyable, Codable {
     func isUnlocked(_ existing: AnimalType) -> Bool {
         switch (self, existing) {
         case (.fish, .blob),
-            (.gecko, .fish),
-            (.fish, .cat),
-            (.cat, .dog),
-            (.dog, .unicorn):
+             (.gecko, .fish),
+             (.cat, .gecko),
+             (.dog, .cat),
+             (.unicorn, .dog):
             return true
         default:
             return false
