@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-struct CompletedTask: Identifiable, Equatable {
+struct CompletedTask: Identifiable, Equatable, Codable {
     let id: UUID
     let sourceTaskID: UUID
     let habit: Habit
@@ -26,10 +26,10 @@ struct CompletedTask: Identifiable, Equatable {
     }
 }
 
-@MainActor
+@Observable
 final class TaskManager: ObservableObject {
-    @Published private(set) var tasks: [HabitTask] = []
-    @Published private(set) var completedTasks: [CompletedTask] = []
+    var tasks: [HabitTask] = []
+    var completedTasks: [CompletedTask] = []
 
     weak var animalManager: AnimalManager?
     private var timerCancellable: AnyCancellable?
@@ -72,6 +72,9 @@ final class TaskManager: ObservableObject {
 
         // Apply rewards to the pet
         applyRewards(for: task.habit)
+        
+        // Trigger save in the animal manager
+        animalManager?.save()
     }
 
     func removeExpiredTasks(now: Date = Date()) {
@@ -196,5 +199,43 @@ final class TaskManager: ObservableObject {
         animalManager.animal.status.happiness.value = max(minVal, min(maxVal, animalManager.animal.status.happiness.value))
         animalManager.animal.status.health.value    = max(minVal, min(maxVal, animalManager.animal.status.health.value))
         animalManager.animal.status.hunger.value    = max(minVal, min(maxVal, animalManager.animal.status.hunger.value))
+    }
+    
+    // MARK: - Developer Mode Reset Functions
+    
+    /// Clears all active and completed tasks (for testing or reset purposes)
+    func clearAllTasks() {
+        tasks.removeAll()
+        completedTasks.removeAll()
+        cooldownUntil.removeAll()
+        regenerateTasksIfNeeded(now: .now)
+    }
+    
+    /// Manually assigns a specific task (for dev mode)
+    func assignTask(for habit: Habit) {
+        // Remove any existing task for this habit
+        tasks.removeAll { $0.habit == habit }
+        
+        // Remove cooldown for this habit
+        cooldownUntil.removeValue(forKey: habit)
+        
+        // Add the new task
+        let newTask = HabitTask(habit: habit, calendar: calendar)
+        tasks.append(newTask)
+        
+        // Sort by expiration
+        tasks.sort { $0.expiration < $1.expiration }
+    }
+    
+    // MARK: - Persistence Support Methods
+    
+    /// Returns the current cooldowns dictionary for persistence
+    func getCooldowns() -> [Habit: Date] {
+        return cooldownUntil
+    }
+    
+    /// Sets a cooldown for a specific habit (used during initialization from persistent data)
+    func setCooldown(for habit: Habit, until date: Date) {
+        cooldownUntil[habit] = date
     }
 }

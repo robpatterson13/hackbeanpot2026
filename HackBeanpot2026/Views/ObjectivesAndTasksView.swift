@@ -2,10 +2,7 @@ import SwiftUI
 import Combine
 
 struct ObjectivesAndTasksView: View {
-    let animalManager: AnimalManager
-    @StateObject private var manager = TaskManager()
-    @StateObject private var dailyObjectives = DailyObjectiveManager()
-    
+    @State var animalManager: AnimalManager
     @State private var selectedCompleted: CompletedTask? = nil
     
     var body: some View {
@@ -13,7 +10,7 @@ struct ObjectivesAndTasksView: View {
             List {
                 // Daily Objective
                 Section("Daily Objective") {
-                    if let objective = dailyObjectives.currentObjective {
+                    if let objective = animalManager.objectivesManager.currentObjective {
                         VStack(alignment: .leading, spacing: 8) {
                             HStack(spacing: 8) {
                                 Text(objectiveTitle(objective.type))
@@ -35,8 +32,8 @@ struct ObjectivesAndTasksView: View {
                             
                             if objectiveIsComplete(objective) {
                                 Button("Claim") {
-                                    dailyObjectives.completeObjective()
-                                    dailyObjectives.currentObjective = createNewObjective()
+                                    animalManager.objectivesManager.completeObjective()
+                                    animalManager.objectivesManager.currentObjective = createNewObjective()
                                 }
                                 .buttonStyle(.borderedProminent)
                             }
@@ -44,15 +41,15 @@ struct ObjectivesAndTasksView: View {
                         .padding(.vertical, 4)
                     } else {
                         Button("Get Today’s Objective") {
-                            dailyObjectives.currentObjective = createNewObjective()
+                            animalManager.objectivesManager.assignInitialObjective()
                         }
                     }
                 }
                 
                 // Completed Objectives
-                if !dailyObjectives.completedObjectives.isEmpty {
+                if !animalManager.objectivesManager.completedObjectives.isEmpty {
                     Section("Completed Objectives") {
-                        ForEach(Array(dailyObjectives.completedObjectives.enumerated()), id: \.offset) { _, completed in
+                        ForEach(Array(animalManager.objectivesManager.completedObjectives.enumerated()), id: \.offset) { _, completed in
                             HStack {
                                 Image(systemName: "checkmark.seal.fill")
                                     .foregroundColor(.green)
@@ -71,20 +68,20 @@ struct ObjectivesAndTasksView: View {
                 }
                 
                 // Active tasks
-                if !manager.tasks.isEmpty {
+                if !animalManager.taskManager.tasks.isEmpty {
                     Section("Active Tasks") {
-                        ForEach(manager.tasks) { task in
+                        ForEach(animalManager.taskManager.tasks) { task in
                             TaskView(task: task) {
-                                manager.complete(task)
+                                animalManager.taskManager.complete(task)
                             }
                         }
                     }
                 }
                 
                 // Completed tasks
-                if !manager.completedTasks.isEmpty {
+                if !animalManager.taskManager.completedTasks.isEmpty {
                     Section("Completed Tasks") {
-                        ForEach(manager.completedTasks) { completed in
+                        ForEach(animalManager.taskManager.completedTasks) { completed in
                             HStack(spacing: 16) {
                                 Image(systemName: completed.habit.imageName)
                                     .resizable()
@@ -113,7 +110,7 @@ struct ObjectivesAndTasksView: View {
             }
             .navigationTitle("Today")
             .overlay {
-                if manager.tasks.isEmpty && manager.completedTasks.isEmpty && dailyObjectives.currentObjective == nil {
+                if animalManager.taskManager.tasks.isEmpty && animalManager.taskManager.completedTasks.isEmpty && animalManager.objectivesManager.currentObjective == nil {
                     ContentUnavailableView("No Tasks Right Now",
                                            systemImage: "sun.max",
                                            description: Text("Check back later — tasks and objectives appear throughout the day."))
@@ -123,30 +120,18 @@ struct ObjectivesAndTasksView: View {
                 CompletedDetailView(completed: completed)
             }
         }
-        .onAppear {
-            // Wire managers
-            manager.animalManager = animalManager
-            dailyObjectives.animalManager = animalManager
-            
-            // Ensure we have a current objective for today
-            if dailyObjectives.currentObjective == nil {
-                dailyObjectives.currentObjective = createNewObjective()
-            } else {
-                dailyObjectives.assignNewObjective()
-            }
-        }
     }
     
     // MARK: - Inline helpers
     
     private func objectiveIsComplete(_ objective: DailyObjective) -> Bool {
-        objective.isComplete(using: dailyObjectives)
+        objective.isComplete(using: animalManager.objectivesManager)
     }
     
     private func progressForObjective(_ objective: DailyObjective) -> (current: Double, total: Double) {
         switch objective.type {
         case .finishTwoTasksToday:
-            let tasksDoneToday = manager.completedTasks.filter {
+            let tasksDoneToday = animalManager.taskManager.completedTasks.filter {
                 Calendar.current.isDateInToday($0.completedAt)
             }
             return (current: Double(tasksDoneToday.count), total: 2.0)

@@ -19,9 +19,9 @@ class CustomTabBar: UIView {
     private var selectedIndex: Int = 0
     
     private let tabItems = [
-        TabItem(title: "Home", icon: "house", selectedIcon: "house.fill"),
-        TabItem(title: "Explore", icon: "magnifyingglass", selectedIcon: "magnifyingglass"),
-        TabItem(title: "Shop", icon: "cart", selectedIcon: "cart.fill")
+        TabItem(title: "", icon: "home", selectedIcon: "house.fill"),
+        TabItem(title: "", icon: "tasks", selectedIcon: "magnifyingglass"),
+        TabItem(title: "", icon: "shop", selectedIcon: "person.fill")
     ]
     
     override init(frame: CGRect) {
@@ -51,10 +51,10 @@ class CustomTabBar: UIView {
         addSubview(stackView)
         
         NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: topAnchor, constant: 10),
-            stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
-            stackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -10)
+            stackView.topAnchor.constraint(equalTo: topAnchor),
+            stackView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            stackView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            stackView.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
         
         for (index, item) in tabItems.enumerated() {
@@ -130,15 +130,15 @@ class CustomTabButton: UIButton {
         addSubview(customTitleLabel)
         
         NSLayoutConstraint.activate([
-            iconImageView.topAnchor.constraint(equalTo: topAnchor, constant: 8),
+            iconImageView.topAnchor.constraint(equalTo: topAnchor),
             iconImageView.centerXAnchor.constraint(equalTo: centerXAnchor),
-            iconImageView.widthAnchor.constraint(equalToConstant: 24),
-            iconImageView.heightAnchor.constraint(equalToConstant: 24),
+            iconImageView.widthAnchor.constraint(equalToConstant: 80),
+            iconImageView.heightAnchor.constraint(equalToConstant: 80),
             
-            customTitleLabel.topAnchor.constraint(equalTo: iconImageView.bottomAnchor, constant: 4),
+            customTitleLabel.topAnchor.constraint(equalTo: iconImageView.bottomAnchor),
             customTitleLabel.leadingAnchor.constraint(equalTo: leadingAnchor),
             customTitleLabel.trailingAnchor.constraint(equalTo: trailingAnchor),
-            customTitleLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8)
+            customTitleLabel.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
         
         setSelected(false)
@@ -147,12 +147,12 @@ class CustomTabButton: UIButton {
     func setSelected(_ selected: Bool) {
         UIView.animate(withDuration: 0.2, delay: 0, options: [.curveEaseInOut], animations: {
             if selected {
-                self.iconImageView.image = UIImage(systemName: self.tabItem.selectedIcon)
+                self.iconImageView.image = UIImage(named: self.tabItem.icon)
                 self.iconImageView.tintColor = .systemBlue
                 self.customTitleLabel.textColor = .systemBlue
                 self.transform = CGAffineTransform(scaleX: 1.1, y: 1.1)
             } else {
-                self.iconImageView.image = UIImage(systemName: self.tabItem.icon)
+                self.iconImageView.image = UIImage(named: self.tabItem.icon)
                 self.iconImageView.tintColor = .systemGray
                 self.customTitleLabel.textColor = .systemGray
                 self.transform = .identity
