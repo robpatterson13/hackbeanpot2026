@@ -102,7 +102,7 @@ struct ShopView: View {
                         .background(.thinMaterial, in: Capsule())
                     }
                     .padding(.horizontal)
-                    .padding(.top, 20)
+                    .padding(.top, 40)
                     Spacer()
                 }
             }

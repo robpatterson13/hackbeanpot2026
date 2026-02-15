@@ -52,38 +52,7 @@ struct TaskView: View {
                         .foregroundColor(expirationColor)
                         .monospacedDigit()
                 }
-            }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 2) {
-                HStack(spacing: 8) {
-                    Label {
-                        Text("\(task.habit.happinessIncrease)")
-                            .font(.caption)
-                            .foregroundColor(.orange)
-                    } icon: {
-                        Image("happiness").resizable()
-                            .scaledToFit()
-                            .frame(width: 40, height: 40)
-                    }
-                    Label {
-                        Text("\(task.habit.healthIncrease)")
-                            .font(.caption)
-                            .foregroundColor(.red)
-                    } icon: {
-                        Image("health").resizable()
-                            .scaledToFit()
-                            .frame(width: 40, height: 40)
-                    }
-                    Label {
-                        Text("\(task.habit.hungerIncrease)")
-                            .font(.caption)
-                            .foregroundColor(.blue)
-                    } icon: {
-                        Image("hunger").resizable()
-                            .scaledToFit()
-                            .frame(width: 40, height: 40)
-                    }
-                }
+                .frame(maxWidth: .infinity, alignment: .center)
             }
         }
         .padding(16)

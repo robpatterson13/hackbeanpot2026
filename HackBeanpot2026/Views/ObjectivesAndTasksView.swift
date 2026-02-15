@@ -18,84 +18,44 @@ struct ObjectivesAndTasksView: View {
                 .scrollDisabled(false)
                 .ignoresSafeArea()
                 
-                ScrollView {
-                    VStack(spacing: 24) {
-                        Color.clear.frame(height: 160)
-                        
-                        VStack(alignment: .leading, spacing: 12) {
-                            if let objective = animalManager.objectivesManager.currentObjective {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    HStack(spacing: 8) {
-                                        Text(objectiveTitle(objective.type))
-                                            .padding(.bottom, 8)
-                                            .frame(maxWidth: .infinity, alignment: .center)
-                                            .font(.h2)
-                                        if objectiveIsComplete(objective) {
-                                            Image(systemName: "checkmark.seal.fill")
-                                                .foregroundColor(.green)
-                                        }
-                                    }
-                                    
-                                    HStack {
-                                        let progress = progressForObjective(objective)
-                                        ProgressView(value: progress.current, total: progress.total)
-                                            .progressViewStyle(.linear)
-                                        Text("\(Int(progress.current))/\(Int(progress.total))")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    
-                                    if objectiveIsComplete(objective) {
-                                        Button("claim") {
-                                            animalManager.objectivesManager.completeObjective()
-                                            animalManager.objectivesManager.currentObjective = createNewObjective()
-                                        }
-                                        .buttonStyle(.borderedProminent)
-                                        .font(.h3)
-                                    }
+                VStack(spacing: 24) {
+                    Color.clear.frame(height: 200)
+                    
+                    VStack(alignment: .leading, spacing: 12) {
+                        if let objective = animalManager.objectivesManager.currentObjective {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack(spacing: 8) {
+                                    Text(objectiveTitle(objective.type))
+                                        .padding(.bottom, 8)
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .font(.h2)
                                 }
-                                .padding(.horizontal, 16)
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
-                            } else {
-                                Button("get today’s objective") {
-                                    animalManager.objectivesManager.assignInitialObjective()
-                                }
-                                .font(.h3)
-                                .padding()
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                            }
-                        }
-                        .padding(.horizontal, 48)
-
-                        // Completed Objectives
-                        if !animalManager.objectivesManager.completedObjectives.isEmpty {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("completed objectives")
-                                    .font(.h2)
                                 
-                                ForEach(Array(animalManager.objectivesManager.completedObjectives.enumerated()), id: \.offset) { _, completed in
-                                    HStack {
-                                        Image(systemName: "checkmark.seal.fill")
-                                            .foregroundColor(.green)
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(objectiveTitle(completed.type))
-                                                .font(.h3)
-                                            Text(completed.date, style: .date)
-                                                .font(.caption)
-                                                .foregroundColor(.secondary)
-                                        }
-                                        Spacer()
-                                    }
-                                    .padding(12)
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                HStack {
+                                    let progress = progressForObjective(objective)
+                                    ProgressView(value: progress.current, total: progress.total)
+                                        .progressViewStyle(.linear)
+                                    Text("\(Int(progress.current))/\(Int(progress.total))")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
                                 }
                             }
-                            .padding(.horizontal, 48)
+                            .padding(.horizontal, 16)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                        } else {
+                            Button("get today’s objective") {
+                                animalManager.objectivesManager.assignInitialObjective()
+                            }
+                            .font(.h3)
+                            .padding()
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
-                        
-                        Color.clear.frame(height: 12)
-                        
-                        // Active tasks
+                    }
+                    .padding(.horizontal, 48)
+                    
+                    Color.clear.frame(height: 12)
+                    
+                    ScrollView {
                         if !animalManager.taskManager.tasks.isEmpty {
                             VStack(alignment: .leading, spacing: 12) {
                                 ForEach(animalManager.taskManager.tasks) { task in
@@ -123,20 +83,21 @@ struct ObjectivesAndTasksView: View {
                                             Text(completed.habit.displayName)
                                                 .font(.body)
                                             Text(completed.completedAt, style: .date)
-                                                .font(.caption)
+                                                .font(.body)
                                                 .foregroundColor(.secondary)
                                         }
                                         Spacer()
                                         Image(systemName: "checkmark.seal.fill")
                                             .foregroundColor(.green)
                                     }
-                                    .padding(.horizontal, 20)
+                                    .padding(.horizontal, 16)
                                     .clipShape(RoundedRectangle(cornerRadius: 12))
                                     .onTapGesture {
                                         selectedCompleted = completed
                                     }
                                 }
                             }
+                            .padding(.horizontal, 48)
                         }
                     }
                     .overlay {

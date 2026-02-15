@@ -579,11 +579,12 @@ struct TaskAssignerOverlay: View {
                     }
                 }
                 
-                Button("Close") {
+                Button("close") {
                     isPresented = false
                     TabBarVisibilityController.showTabBarAnimated()
                 }
                 .padding()
+                .font(.h3)
                 .background(.secondary)
                 .foregroundColor(.primary)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -631,19 +632,18 @@ struct InventoryOverlay: View {
                 .onTapGesture {
                     isPresented = false
                 }
-            
+            Spacer()
             VStack(spacing: 0) {
-                // Custom header
                 HStack {
                     Text("Inventory")
-                        .font(.title2)
-                        .fontWeight(.semibold)
+                        .font(.h3)
                     
                     Spacer()
                     
-                    Button("Close") {
+                    Button("close") {
                         isPresented = false
                     }
+                    .font(.h3)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(.quaternary)
@@ -817,7 +817,7 @@ struct GameOverOverlay: View {
                         .foregroundColor(.black)
                     
                     Text("Your pet's vital stats have dropped to zero.")
-                        .font(.habitTitle)
+                        .font(.body)
                         .foregroundColor(.black)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
@@ -831,7 +831,7 @@ struct GameOverOverlay: View {
                 
                 VStack(spacing: 16) {
                     Text("Final Stats:")
-                        .font(.habitTitle)
+                        .font(.body)
                         .foregroundColor(.black)
                     
                     VStack(spacing: 8) {
@@ -897,11 +897,12 @@ private struct InventoryPopoverContent: View {
             // Header (only this consumes its own height)
             HStack {
                 Text("Inventory")
-                    .font(.headline)
+                    .font(.h2)
                 Spacer()
-                Button("Close") {
+                Button("close") {
                     isPresented = false
                 }
+                .font(.h3)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(.quaternary)
