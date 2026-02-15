@@ -251,7 +251,7 @@ struct ShopView: View {
     }
 }
 
-fileprivate func shopAssetName(for item: ShopItem) -> String? {
+func shopAssetName(for item: ShopItem) -> String? {
     switch item {
     case .steak: return "steak"
     case .fedora: return "fedora"

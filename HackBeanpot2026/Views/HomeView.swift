@@ -56,7 +56,6 @@ class HomeViewModel {
 
 struct HomeView: View {
     @State private var homeViewModel: HomeViewModel = .init(animalManager: AnimalManager.shared)
-    @State private var yOffset: CGFloat = 0
     @State private var animationManager = AnimationManager.shared
     @State private var animalManager = AnimalManager.shared
     @State private var isBlob: Bool = true
@@ -72,6 +71,9 @@ struct HomeView: View {
     @State private var showStatDecaySettings: Bool = false
     @State private var showGameOver: Bool = false
     
+    // Accessory positioning helper
+    private let accessoryManager = AnimalAccessoryManager()
+    
     enum ResetType: String, CaseIterable {
         case tasks = "Tasks"
         case money = "Money"
@@ -86,9 +88,24 @@ struct HomeView: View {
     }
     
     private var isGameOver: Bool {
-        return animal.status.health.value <= 0 || 
-               animal.status.happiness.value <= 0 || 
-               animal.status.hunger.value <= 0
+        return animal.status.health.value <= 0 ||
+        animal.status.happiness.value <= 0 ||
+        animal.status.hunger.value <= 0
+    }
+    
+    // Convenience to get current animal type
+    private var currentAnimalType: AnimalType {
+        AnimalManager.shared.animal.type
+    }
+    
+    // Equipped accessories from inventory
+    private var equippedAccessories: [AccessoryType] {
+        AnimalManager.shared.inventoryManager
+            .equippedItems
+            .compactMap { item in
+                if case .accessory(let type) = item.itemType { return type }
+                return nil
+            }
     }
     
     var body: some View {
@@ -172,37 +189,52 @@ struct HomeView: View {
                     .padding(.top)
                 }
                 
-                Spacer()
-                
-                ZStack {
-                    Image(animationManager.showState1 ? homeViewModel.getAnimalImages().0 : homeViewModel.getAnimalImages().1)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 250, height: 250)
-                        .offset(y: yOffset)
-                        .onAppear {
-                            withAnimation(
-                                .easeInOut(duration: 3)
-                                .repeatForever(autoreverses: true)
-                            ) {
-                                yOffset = -15
-                            }
-                        }
-                        .onTapGesture {
-                            // Secret dev mode unlock: tap animal 7 times quickly
-                            tapCount += 1
-                            if tapCount >= 7 {
-                                devModeUnlocked = true
-                                tapCount = 0
-                            }
-                            
-                            // Reset tap count after 2 seconds of no tapping
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                if tapCount < 7 {
+                // Animal + accessories move together using a time-based bobbing offset that doesn't depend on view state
+                TimelineView(.animation) { context in
+                    let period: TimeInterval = 6.0
+                    let amplitude: CGFloat = 15
+                    let elapsed = context.date.timeIntervalSinceReferenceDate
+                    let phase = (elapsed.truncatingRemainder(dividingBy: period) / period) * 2 * .pi
+                    // Start at -amplitude to match previous initial offset and bob smoothly
+                    let bob = -amplitude * CGFloat(cos(phase))
+                    
+                    ZStack {
+                        Image(animationManager.showState1 ? homeViewModel.getAnimalImages().0 : homeViewModel.getAnimalImages().1)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 250, height: 250)
+                            .onTapGesture {
+                                // Secret dev mode unlock: tap animal 7 times quickly
+                                tapCount += 1
+                                if tapCount >= 7 {
+                                    devModeUnlocked = true
                                     tapCount = 0
                                 }
+                                
+                                // Reset tap count after 2 seconds of no tapping
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    if tapCount < 7 {
+                                        tapCount = 0
+                                    }
+                                }
+                            }
+                        
+                        // Overlay all equipped accessories with per-animal positioning
+                        ForEach(equippedAccessories, id: \.self) { accessory in
+                            if let pos = accessoryManager.getAccessoryPosition(for: accessory, animalType: currentAnimalType) {
+                                Image(accessory.rawValue)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(
+                                        width: pos.width ?? accessoryImageSize(for: accessory),
+                                        height: pos.width ?? accessoryImageSize(for: accessory)
+                                    )
+                                    // Base placement relative to animal center
+                                    .offset(x: pos.xOffset, y: pos.yOffset)
                             }
                         }
+                    }
+                    .offset(y: bob)
                 }
                 
                 Spacer()
@@ -266,6 +298,15 @@ struct HomeView: View {
                 // Only resume if the game-over condition is no longer true
                 AnimalManager.shared.resumeStatDecay()
             }
+        }
+    }
+    
+    // Size tweaks per accessory; adjust as needed
+    private func accessoryImageSize(for accessory: AccessoryType) -> CGFloat {
+        switch accessory {
+        case .fedora: return 100
+        case .sunglasses: return 90
+        case .tie, .bowtie: return 80
         }
     }
     
@@ -957,4 +998,3 @@ private extension UIWindowScene {
         return self.windows.first { $0.isKeyWindow }
     }
 }
-
