@@ -5,7 +5,7 @@
 //  Created by Rob Patterson on 2/14/26
 //
 
-enum Habit: CaseIterable {
+enum Habit: CaseIterable, Codable {
     case sleep
     case leetcode
     case jobs

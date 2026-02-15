@@ -8,13 +8,13 @@
 import Foundation
 import Combine
 
-enum DailyObjectiveType {
+enum DailyObjectiveType: Codable {
     case finishTwoTasksToday
     case feedPet
     case makePetHappy
 }
 
-struct DailyObjective {
+struct DailyObjective: Codable {
     private(set) var type: DailyObjectiveType
     var date: Date
     
@@ -45,7 +45,7 @@ struct DailyObjective {
                    return true
                }
            }
-           return false
+        
         return false
     }
     
@@ -70,17 +70,25 @@ final class DailyObjectiveManager {
         if let objective = currentObjective, Calendar.current.isDateInYesterday(objective.date) {
             completedObjectives.append(objective)
             currentObjective = createNewObjective()
+            animalManager?.save()
         }
     }
     
     func completeObjective() {
         if let objective = currentObjective {
             completedObjectives.append(objective)
+            animalManager?.save()
         }
+        
+        currentObjective = nil
     }
     
     func assignInitialObjective() {
         currentObjective = createNewObjective()
+        // Only save if we have a connected animalManager (avoid saving during init)
+        if animalManager != nil {
+            animalManager?.save()
+        }
     }
     
     private func createNewObjective() -> DailyObjective {
@@ -102,5 +110,6 @@ final class DailyObjectiveManager {
         currentObjective = nil
         completedObjectives = []
         assignInitialObjective()
+        animalManager?.save()
     }
 }
