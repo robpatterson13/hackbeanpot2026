@@ -121,17 +121,17 @@ struct HomeView: View {
                             StatBar(value: Double(animal.status.health.value),
                                     color: .red,
                                     icon: Image("health"),
-                                    iconWidth: 40)
+                                    iconWidth: 35)
                             
                             StatBar(value: Double(animal.status.hunger.value),
                                     color: .blue,
                                     icon: Image("hunger"),
-                                    iconWidth: 40)
+                                    iconWidth: 35)
                             
                             StatBar(value: Double(animal.status.happiness.value),
                                     color: .orange,
                                     icon: Image("happiness"),
-                                    iconWidth: 30)
+                                    iconWidth: 25)
                         }
                         .frame(width: 315)
                         .padding(12)
@@ -670,10 +670,10 @@ private struct StatBar: View {
     let iconWidth: CGFloat
     
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 2) {
             ZStack {
                 Circle()
-                    .fill(Color.white.opacity(0.7)).frame(width: 32, height: 32)
+                    .fill(Color.white.opacity(0.7)).frame(width: 28, height: 28)
                     .overlay(
                                 Circle()
                                     .stroke(Color.black, lineWidth: 1)
@@ -689,24 +689,21 @@ private struct StatBar: View {
                 GeometryReader { geo in
                     Rectangle()
                         .fill(color)
-                        .frame(width: max((geo.size.width - 11 ) * CGFloat(value / 100), 0), height: 12)
+                        .frame(width: max((geo.size.width - 24 ) * CGFloat(value / 100), 0), height: 12)
                         .padding(.horizontal, 5)
                         .frame(height: 12)
                 }
                 Image("bar")
                     .resizable()
                     .aspectRatio(contentMode: .fill)
-                    .frame(height: 12)
+                    .frame(width: 200, height: 12)
                     .offset(y: 4)
-                
-                
             }
             .frame(height: 12)
             
             Text("\(Int(value))/100")
-                .font(.caption)
+                .font(.h3)
                 .foregroundColor(.black)
-                .frame(width: 50, alignment: .trailing)
         }
         .frame(height: 24)
     }

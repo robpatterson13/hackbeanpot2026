@@ -39,21 +39,16 @@ struct TaskView: View {
 
     var body: some View {
         HStack(spacing: 16) {
-            Image(systemName: task.habit.imageName)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 40, height: 40)
-                .foregroundColor(.accentColor)
-
             VStack(alignment: .leading, spacing: 4) {
                 Text(task.habit.displayName)
-                    .font(.habitTitle)
+                    .font(.h2)
                     .bold()
+                    .frame(maxWidth: .infinity, alignment: .center)
                 HStack {
                     Image(systemName: expirationIcon)
                         .foregroundColor(expirationColor)
                     Text(countdownString)
-                        .font(.subheadline)
+                        .font(.body)
                         .foregroundColor(expirationColor)
                         .monospacedDigit()
                 }
@@ -91,8 +86,8 @@ struct TaskView: View {
                 }
             }
         }
-        .padding(.vertical, 8)
-        .contentShape(Rectangle())
+        .padding(16)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
         .onTapGesture {
             guard !task.isExpired else { return }
             // Optional: show a points breakdown before verification

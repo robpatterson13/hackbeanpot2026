@@ -96,7 +96,7 @@ struct ShopView: View {
                                 .scaledToFit()
                                 .frame(width: 35, height: 35)
                             Text("\(viewModel.coins)")
-                                .font(.body)
+                                .font(.h3)
                         }
                         .padding(8)
                         .background(.thinMaterial, in: Capsule())
@@ -290,7 +290,7 @@ struct ShopItemCard: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: compact ? 6 : 10) {
+        VStack(alignment: .leading, spacing: compact ? 6 : 12) {
             // Image / Icon
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
@@ -303,9 +303,9 @@ struct ShopItemCard: View {
             
             // Title and price
             Text(item.displayName)
-                .font(compact ? .caption : .headline)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
+                .font(.h2)
             
             HStack {
                 Image("coin")
@@ -313,6 +313,7 @@ struct ShopItemCard: View {
                     .scaledToFit()
                     .frame(width: 28, height: 28)
                 Text("\(item.cost)")
+                    .font(.h3)
                 Spacer()
                 
                 if isOwned {
@@ -330,7 +331,6 @@ struct ShopItemCard: View {
                         .disabled(!canBuy)
                 }
             }
-            .font(compact ? .caption2 : .subheadline)
         }
         .padding(compact ? 6 : 12)
         .background(
@@ -391,13 +391,13 @@ struct ShopItemDetailSheet: View {
                         .padding()
                 }
             }
-            .navigationTitle(item.displayName)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") {
+                    Button("close") {
                         onClose()
                         dismiss()
                     }
+                    .font(.h3)
                 }
             }
         }
