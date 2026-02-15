@@ -58,6 +58,10 @@ struct HomeView: View {
         case all = "Everything"
     }
     
+    private var animal: Animal? {
+        AnimalManager.shared.animal
+    }
+    
     var body: some View {
         ZStack {
             Image("forest")
@@ -65,6 +69,35 @@ struct HomeView: View {
                 .ignoresSafeArea()
             
             VStack {
+                HStack {
+                    VStack(spacing: 10) {
+                        if let animal {
+                            StatBar(value: 20 /*Double(animal.status.health.value)*/,
+                                    color: .red,
+                                    icon: Image("health"),
+                                    iconWidth: 40)
+                            
+                            StatBar(value: Double(animal.status.hunger.value),
+                                    color: .blue,
+                                    icon: Image("hunger"),
+                                    iconWidth: 40)
+                            
+                            StatBar(value: Double(animal.status.happiness.value),
+                                    color: .orange,
+                                    icon: Image("happiness"),
+                                    iconWidth: 30)
+                        }
+                    }
+                    .frame(width: 315)
+                    .padding(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(red: 1.0, green: 1.0, blue: 1.0, opacity: 0.5))
+                    )
+                }
+                
+                Spacer()
+                
                 // Dev Mode Toggle Button (hidden until unlocked)
                 if devModeUnlocked {
                     HStack {
@@ -90,12 +123,11 @@ struct HomeView: View {
                         .frame(width: 250, height: 250)
                         .offset(y: yOffset)
                         .onAppear {
-                            // Only setup bounce animation, timer is handled by AnimationManager
                             withAnimation(
                                 .easeInOut(duration: 3)
                                 .repeatForever(autoreverses: true)
                             ) {
-                                yOffset = -15 // Bounce up 15 points
+                                yOffset = -15
                             }
                         }
                         .onTapGesture {
@@ -196,85 +228,86 @@ struct HomeView: View {
         AnimalManager.shared.objectivesManager.resetObjectives()
     }
 }
-
-struct DevModeOverlay: View {
-    @Binding var isPresented: Bool
-    @Binding var showResetAlert: Bool
-    @Binding var resetType: HomeView.ResetType?
-    @Binding var showCoinSetter: Bool
-    @Binding var showTaskAssigner: Bool
     
-    var body: some View {
-        ZStack {
-            Color.black.opacity(0.5)
-                .ignoresSafeArea()
-                .onTapGesture {
-                    isPresented = false
-                }
-            
-            VStack(spacing: 20) {
-                Text("Developer Mode")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                
-                VStack(spacing: 12) {
-                    // Set Coins Button
-                    Button("Set Coins") {
-                        showCoinSetter = true
+    
+    struct DevModeOverlay: View {
+        @Binding var isPresented: Bool
+        @Binding var showResetAlert: Bool
+        @Binding var resetType: HomeView.ResetType?
+        @Binding var showCoinSetter: Bool
+        @Binding var showTaskAssigner: Bool
+        
+        var body: some View {
+            ZStack {
+                Color.black.opacity(0.5)
+                    .ignoresSafeArea()
+                    .onTapGesture {
                         isPresented = false
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue.opacity(0.8))
-                    .foregroundColor(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                
+                VStack(spacing: 20) {
+                    Text("Developer Mode")
+                        .font(.title2)
+                        .fontWeight(.bold)
                     
-                    // Assign Task Button
-                    Button("Assign Specific Task") {
-                        showTaskAssigner = true
-                        isPresented = false
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.green.opacity(0.8))
-                    .foregroundColor(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                }
-                
-                Text("Reset Options")
-                    .font(.headline)
-                    .foregroundColor(.secondary)
-                
-                VStack(spacing: 12) {
-                    ForEach(HomeView.ResetType.allCases, id: \.rawValue) { type in
-                        Button("Reset \(type.rawValue)") {
-                            resetType = type
-                            showResetAlert = true
+                    VStack(spacing: 12) {
+                        // Set Coins Button
+                        Button("Set Coins") {
+                            showCoinSetter = true
                             isPresented = false
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.red.opacity(0.8))
+                        .background(Color.blue.opacity(0.8))
+                        .foregroundColor(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        
+                        // Assign Task Button
+                        Button("Assign Specific Task") {
+                            showTaskAssigner = true
+                            isPresented = false
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.green.opacity(0.8))
                         .foregroundColor(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
+                    
+                    Text("Reset Options")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    
+                    VStack(spacing: 12) {
+                        ForEach(HomeView.ResetType.allCases, id: \.rawValue) { type in
+                            Button("Reset \(type.rawValue)") {
+                                resetType = type
+                                showResetAlert = true
+                                isPresented = false
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.red.opacity(0.8))
+                            .foregroundColor(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                        }
+                    }
+                    
+                    Button("Close") {
+                        isPresented = false
+                    }
+                    .padding()
+                    .background(.secondary)
+                    .foregroundColor(.primary)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
-                
-                Button("Close") {
-                    isPresented = false
-                }
-                .padding()
-                .background(.secondary)
-                .foregroundColor(.primary)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .padding(30)
+                .background(.regularMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .padding(30)
             }
-            .padding(30)
-            .background(.regularMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-            .padding(30)
         }
     }
-}
 
 struct CoinSetterOverlay: View {
     @Binding var isPresented: Bool
@@ -408,5 +441,54 @@ struct TaskAssignmentButton: View {
             .background(Color.green.opacity(0.8))
             .clipShape(RoundedRectangle(cornerRadius: 10))
         }
+    }
+}
+
+private struct StatBar: View {
+    let value: Double
+    let color: Color
+    let icon: Image
+    let iconWidth: CGFloat
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .fill(Color.white.opacity(0.7)).frame(width: 32, height: 32)
+                    .overlay(
+                                Circle()
+                                    .stroke(Color.black, lineWidth: 1)
+                            )
+                icon
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: iconWidth, height: iconWidth)
+            }
+            .frame(width: 40, height: 40, alignment: .center)
+            
+            ZStack(alignment: .leading) {
+                GeometryReader { geo in
+                    Rectangle()
+                        .fill(color)
+                        .frame(width: max((geo.size.width - 11 ) * CGFloat(value / 100), 0), height: 12)
+                        .padding(.horizontal, 5)
+                        .frame(height: 12)
+                }
+                Image("bar")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(height: 12)
+                    .offset(y: 4)
+                
+                
+            }
+            .frame(height: 12)
+            
+            Text("\(Int(value))/100")
+                .font(.caption)
+                .foregroundColor(.black)
+                .frame(width: 50, alignment: .trailing)
+        }
+        .frame(height: 24)
     }
 }
