@@ -343,6 +343,15 @@ final class AnimalManager {
         statDecayTimer = nil
     }
     
+    // Public controls to pause/resume stat decay (used by UI like Game Over)
+    func pauseStatDecay() {
+        stopStatDecayTimer()
+    }
+    
+    func resumeStatDecay() {
+        startStatDecayTimer()
+    }
+    
     @objc private func appWillEnterBackground() {
         // Save current time when app goes to background
         UserDefaults.standard.set(Date(), forKey: UserDefaultsKeys.lastUpdateTime)

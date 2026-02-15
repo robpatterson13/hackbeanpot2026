@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import UIKit
 
 @Observable
 class HomeViewModel {
@@ -69,6 +70,7 @@ struct HomeView: View {
     @State private var showTaskAssigner: Bool = false
     @State private var showInventory: Bool = false
     @State private var showStatDecaySettings: Bool = false
+    @State private var showGameOver: Bool = false
     
     enum ResetType: String, CaseIterable {
         case tasks = "Tasks"
@@ -79,8 +81,14 @@ struct HomeView: View {
         case all = "Everything"
     }
     
-    private var animal: Animal? {
+    private var animal: Animal {
         AnimalManager.shared.animal
+    }
+    
+    private var isGameOver: Bool {
+        return animal.status.health.value <= 0 || 
+               animal.status.happiness.value <= 0 || 
+               animal.status.hunger.value <= 0
     }
     
     var body: some View {
@@ -93,22 +101,20 @@ struct HomeView: View {
                 VStack(spacing: 8) {
                     HStack {
                         VStack(spacing: 10) {
-                            if let animal {
-                                StatBar(value: Double(animal.status.health.value),
-                                        color: .red,
-                                        icon: Image("health"),
-                                        iconWidth: 40)
-                                
-                                StatBar(value: Double(animal.status.hunger.value),
-                                        color: .blue,
-                                        icon: Image("hunger"),
-                                        iconWidth: 40)
-                                
-                                StatBar(value: Double(animal.status.happiness.value),
-                                        color: .orange,
-                                        icon: Image("happiness"),
-                                        iconWidth: 30)
-                            }
+                            StatBar(value: Double(animal.status.health.value),
+                                    color: .red,
+                                    icon: Image("health"),
+                                    iconWidth: 40)
+                            
+                            StatBar(value: Double(animal.status.hunger.value),
+                                    color: .blue,
+                                    icon: Image("hunger"),
+                                    iconWidth: 40)
+                            
+                            StatBar(value: Double(animal.status.happiness.value),
+                                    color: .orange,
+                                    icon: Image("happiness"),
+                                    iconWidth: 30)
                         }
                         .frame(width: 315)
                         .padding(12)
@@ -128,6 +134,11 @@ struct HomeView: View {
                             Image("inventory")
                                 .resizable()
                                 .frame(width: 80, height: 80)
+                        }
+                        .popover(isPresented: $showInventory, arrowEdge: .top) {
+                            InventoryPopoverContent(isPresented: $showInventory)
+                                // Let the content fully define size; suggest a popover size
+                                .frame(minWidth: 360, minHeight: 420)
                         }
                     }
                     .padding(.trailing, 30)
@@ -219,10 +230,15 @@ struct HomeView: View {
                 )
             }
             
-            // Inventory Viewer Overlay
-            if showInventory {
-                InventoryOverlay(
-                    isPresented: $showInventory
+            // Game Over Overlay
+            if isGameOver || showGameOver {
+                // Hide the custom tab bar while Game Over is shown
+                TabBarVisibilityController(hide: true)
+                    .allowsHitTesting(false) // invisible helper, doesn't intercept touches
+                GameOverOverlay(
+                    animalManager: $animalManager,
+                    isPresented: $showGameOver,
+                    onReset: resetAfterGameOver
                 )
             }
         }
@@ -234,7 +250,23 @@ struct HomeView: View {
         } message: {
             Text("Are you sure you want to reset \(resetType?.rawValue.lowercased() ?? "")? This action cannot be undone.")
         }
-        .zIndex(showInventory ? 1000 : 0)
+        .zIndex(0)
+        .onChange(of: isGameOver) { _, newValue in
+            if newValue {
+                // Pause stat decay when game over condition is reached
+                AnimalManager.shared.pauseStatDecay()
+                showGameOver = true
+            }
+        }
+        .onChange(of: showGameOver) { _, visible in
+            // Extra safety: pause when the overlay is shown; resume if it is manually dismissed
+            if visible {
+                AnimalManager.shared.pauseStatDecay()
+            } else if !isGameOver {
+                // Only resume if the game-over condition is no longer true
+                AnimalManager.shared.resumeStatDecay()
+            }
+        }
     }
     
     private func performReset() {
@@ -280,6 +312,42 @@ struct HomeView: View {
     
     private func resetObjectives() {
         AnimalManager.shared.objectivesManager.resetObjectives()
+    }
+    
+    private func resetAfterGameOver() {
+        // Fully reset all game state
+        AnimalManager.shared.resetAnimalProgression()
+        AnimalManager.shared.resetCoins()
+        AnimalManager.shared.clearPurchaseHistory()
+        AnimalManager.shared.clearInventory()
+        AnimalManager.shared.taskManager.clearAllTasks()
+        AnimalManager.shared.objectivesManager.resetObjectives()
+        
+        // Remove all animal inventory items except blob
+        let inventory = AnimalManager.shared.inventoryManager
+        let allAnimalTypes: [AnimalType] = [.fish, .gecko, .cat, .dog, .unicorn]
+        for type in allAnimalTypes {
+            inventory.removeItem(.animal(CodableAnimalType(type)))
+        }
+        // Ensure blob is present and equipped
+        if !inventory.hasItem(.animal(AnimalType.blob)) {
+            inventory.addItem(.animal(AnimalType.blob), isEquipped: true)
+        } else {
+            // Make sure blob is equipped
+            if let blobItem = inventory.items.first(where: { $0.itemType == .animal(AnimalType.blob) }) {
+                inventory.equipItem(withId: blobItem.id)
+            }
+        }
+        
+        AnimalManager.shared.save()
+        // Dismiss the overlay
+        showGameOver = false
+        
+        // Resume stat decay for the new game
+        AnimalManager.shared.resumeStatDecay()
+        
+        // Animate the custom tab bar back in after the overlay is dismissed
+        TabBarVisibilityController.showTabBarAnimated()
     }
 }
     
@@ -380,6 +448,8 @@ struct CoinSetterOverlay: View {
                 .ignoresSafeArea()
                 .onTapGesture {
                     isPresented = false
+                    // Animate tab bar back when dismissing via background tap
+                    TabBarVisibilityController.showTabBarAnimated()
                 }
             
             VStack(spacing: 20) {
@@ -400,6 +470,8 @@ struct CoinSetterOverlay: View {
                     Button("Cancel") {
                         isPresented = false
                         coinAmount = ""
+                        // Animate tab bar back in case this overlay was used similarly
+                        TabBarVisibilityController.showTabBarAnimated()
                     }
                     .padding()
                     .background(.secondary)
@@ -411,6 +483,7 @@ struct CoinSetterOverlay: View {
                             AnimalManager.shared.setCoins(amount)
                             isPresented = false
                             coinAmount = ""
+                            TabBarVisibilityController.showTabBarAnimated()
                         }
                     }
                     .padding()
@@ -440,6 +513,7 @@ struct TaskAssignerOverlay: View {
                 .ignoresSafeArea()
                 .onTapGesture {
                     isPresented = false
+                    TabBarVisibilityController.showTabBarAnimated()
                 }
             
             VStack(spacing: 20) {
@@ -459,12 +533,14 @@ struct TaskAssignerOverlay: View {
                         TaskAssignmentButton(habit: habit) {
                             AnimalManager.shared.taskManager.assignTask(for: habit)
                             isPresented = false
+                            TabBarVisibilityController.showTabBarAnimated()
                         }
                     }
                 }
                 
                 Button("Close") {
                     isPresented = false
+                    TabBarVisibilityController.showTabBarAnimated()
                 }
                 .padding()
                 .background(.secondary)
@@ -607,6 +683,7 @@ struct StatDecaySettingsOverlay: View {
                 .ignoresSafeArea()
                 .onTapGesture {
                     isPresented = false
+                    TabBarVisibilityController.showTabBarAnimated()
                 }
             
             VStack(spacing: 20) {
@@ -633,6 +710,7 @@ struct StatDecaySettingsOverlay: View {
                     Button("Cancel") {
                         isPresented = false
                         intervalString = ""
+                        TabBarVisibilityController.showTabBarAnimated()
                     }
                     .padding()
                     .background(.secondary)
@@ -644,6 +722,7 @@ struct StatDecaySettingsOverlay: View {
                         currentInterval = 600
                         intervalString = ""
                         isPresented = false
+                        TabBarVisibilityController.showTabBarAnimated()
                     }
                     .padding()
                     .background(Color.orange)
@@ -656,6 +735,7 @@ struct StatDecaySettingsOverlay: View {
                             currentInterval = interval
                             isPresented = false
                             intervalString = ""
+                            TabBarVisibilityController.showTabBarAnimated()
                         }
                     }
                     .padding()
@@ -676,3 +756,205 @@ struct StatDecaySettingsOverlay: View {
         }
     }
 }
+
+struct GameOverOverlay: View {
+    @Binding var animalManager: AnimalManager
+    @Binding var isPresented: Bool
+    var onReset: (() -> Void)? = nil
+    
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.8)
+                .ignoresSafeArea()
+            
+            VStack(spacing: 30) {
+                VStack(spacing: 16) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 60))
+                        .foregroundColor(.red)
+                    
+                    Text("Game Over!")
+                        .font(.petName)
+                        .fontWeight(.bold)
+                        .foregroundColor(.black)
+                    
+                    Text("Your pet's vital stats have dropped to zero.")
+                        .font(.habitTitle)
+                        .foregroundColor(.black)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                    
+                    Text("All your progress will be reset. You'll have to start over with a new pet.")
+                        .font(.body)
+                        .foregroundColor(.indigo)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+                
+                VStack(spacing: 16) {
+                    Text("Final Stats:")
+                        .font(.habitTitle)
+                        .foregroundColor(.black)
+                    
+                    VStack(spacing: 8) {
+                        HStack {
+                            Image(systemName: "heart.fill")
+                                .foregroundColor(animalManager.animal.status.health.value <= 0 ? .red : .black)
+                            Text("Health: \(animalManager.animal.status.health.value)/100")
+                                .font(.body)
+                                .foregroundColor(animalManager.animal.status.health.value <= 0 ? .red : .black)
+                            Spacer()
+                        }
+                        
+                        HStack {
+                            Image(systemName: "face.smiling.fill")
+                                .foregroundColor(animalManager.animal.status.happiness.value <= 0 ? .red : .black)
+                            Text("Happiness: \(animalManager.animal.status.happiness.value)/100")
+                                .font(.body)
+                                .foregroundColor(animalManager.animal.status.happiness.value <= 0 ? .red : .black)
+                            Spacer()
+                        }
+                        
+                        HStack {
+                            Image(systemName: "fork.knife")
+                                .foregroundColor(animalManager.animal.status.hunger.value <= 0 ? .red : .black)
+                            Text("Hunger: \(animalManager.animal.status.hunger.value)/100")
+                                .font(.body)
+                                .foregroundColor(animalManager.animal.status.hunger.value <= 0 ? .red : .black)
+                            Spacer()
+                        }
+                    }
+                    .padding()
+                    .background(.ultraThickMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                
+                Button("Start Over") {
+                    onReset?()
+                }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 16)
+                .background(Color.red)
+                .foregroundColor(.white)
+                .font(.body)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .padding(40)
+            .background(.regularMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            .opacity(0.87)
+            .padding(30)
+        }
+        .zIndex(2000) // Ensure it appears above everything else
+    }
+}
+
+// MARK: - Inventory popover content
+private struct InventoryPopoverContent: View {
+    @Binding var isPresented: Bool
+    
+    var body: some View {
+        // Use a container that expands fully and ignores safe areas to eliminate top/bottom gaps
+        VStack(spacing: 0) {
+            // Header (only this consumes its own height)
+            HStack {
+                Text("Inventory")
+                    .font(.headline)
+                Spacer()
+                Button("Close") {
+                    isPresented = false
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(.quaternary)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+            .padding(.horizontal)
+            .padding(.top, 10)
+            .padding(.bottom, 8)
+            .background(.ultraThinMaterial)
+            
+            // Content fills the rest
+            InventoryView(animalManager: AnimalManager.shared)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // Clear any navigation title spacing inside the view
+                .navigationBarTitleDisplayMode(.inline)
+                .background(Color.clear)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(.regularMaterial)
+        .ignoresSafeArea() // ensure no extra safe-area padding in popover
+    }
+}
+
+// MARK: - UIKit bridge to control MainTabBarController visibility from SwiftUI
+private struct TabBarVisibilityController: UIViewRepresentable {
+    let hide: Bool
+    
+    func makeUIView(context: Context) -> UIView {
+        let v = UIView(frame: .zero)
+        DispatchQueue.main.async {
+            updateTabBarVisibility(from: v)
+        }
+        return v
+    }
+    
+    func updateUIView(_ uiView: UIView, context: Context) {
+        DispatchQueue.main.async {
+            updateTabBarVisibility(from: uiView)
+        }
+    }
+    
+    private func updateTabBarVisibility(from view: UIView) {
+        guard let tab = findTabBarController(from: view) as? MainTabBarController else { return }
+        if hide {
+            tab.hideCustomTabBar(animated: true)
+        } else {
+            tab.showCustomTabBar(animated: true)
+        }
+    }
+    
+    private func findTabBarController(from view: UIView) -> UITabBarController? {
+        var responder: UIResponder? = view
+        while let r = responder {
+            if let vc = r as? UIViewController, let tbc = vc.tabBarController {
+                return tbc
+            }
+            responder = r.next
+        }
+        return nil
+    }
+    
+    // Convenience method to show the tab bar with animation from SwiftUI actions
+    static func showTabBarAnimated() {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.keyWindow,
+              let root = window.rootViewController else { return }
+        if let tab = findMainTabBarController(from: root) {
+            tab.showCustomTabBar(animated: true)
+        }
+    }
+    
+    private static func findMainTabBarController(from root: UIViewController) -> MainTabBarController? {
+        if let tab = root as? MainTabBarController { return tab }
+        if let nav = root as? UINavigationController {
+            return nav.viewControllers.compactMap { findMainTabBarController(from: $0) }.first
+        }
+        for child in root.children {
+            if let found = findMainTabBarController(from: child) {
+                return found
+            }
+        }
+        if let presented = root.presentedViewController {
+            return findMainTabBarController(from: presented)
+        }
+        return nil
+    }
+}
+
+private extension UIWindowScene {
+    var keyWindow: UIWindow? {
+        return self.windows.first { $0.isKeyWindow }
+    }
+}
+

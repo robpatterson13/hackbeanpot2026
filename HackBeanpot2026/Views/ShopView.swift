@@ -194,9 +194,9 @@ struct ShopView: View {
     private func verticalOffset(for category: ShopCategory, shelfHeight: CGFloat) -> CGFloat {
         switch category {
         case .upgrades:
-            return -shelfHeight * 0.15 // move pets up a bit more
+            return -shelfHeight * 0.01 // move pets up a bit more
         case .accessories:
-            return shelfHeight * -0.03 // nudge accessories slightly down (higher than before)
+            return shelfHeight * -0.01 // nudge accessories slightly down (higher than before)
         case .food:
             return shelfHeight * 0.04 // move food down a bit more
         case .backgrounds:

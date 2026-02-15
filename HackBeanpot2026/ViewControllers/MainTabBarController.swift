@@ -10,7 +10,8 @@ import UIKit
 class MainTabBarController: UITabBarController {
     
     private var customTabBar: CustomTabBar!
-    
+    private var customTabBarBottomConstraint: NSLayoutConstraint?
+
     override func viewDidLoad() {
         super.viewDidLoad()
         print("MainTabBarController: viewDidLoad called")
@@ -50,11 +51,13 @@ class MainTabBarController: UITabBarController {
         
         view.addSubview(customTabBar)
         
+        customTabBarBottomConstraint = customTabBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+        
         NSLayoutConstraint.activate([
             customTabBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             customTabBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            customTabBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            customTabBar.heightAnchor.constraint(equalToConstant: 80)
+            customTabBar.heightAnchor.constraint(equalToConstant: 80),
+            customTabBarBottomConstraint!
         ])
         
         print("MainTabBarController: Custom tab bar setup complete")
@@ -95,6 +98,47 @@ class MainTabBarController: UITabBarController {
         
         for viewController in viewControllers {
             viewController.view.frame = view.bounds
+        }
+    }
+    
+    /// Call this to animate the custom tab bar out of view (down)
+    func hideCustomTabBar(animated: Bool = true) {
+        guard let constraint = customTabBarBottomConstraint else { return }
+        let offset = customTabBar.frame.height + 32 // Hide past bottom edge, 32pt extra for safety
+        constraint.constant = offset
+        let animations = { self.view.layoutIfNeeded() }
+        
+        if animated {
+            // Slightly slower, still snappy spring out
+            UIView.animate(withDuration: 0.36,
+                           delay: 0,
+                           usingSpringWithDamping: 0.85,
+                           initialSpringVelocity: 0.9,
+                           options: [.allowUserInteraction, .beginFromCurrentState]) {
+                animations()
+            }
+        } else {
+            animations()
+        }
+    }
+    
+    /// Call this to animate the custom tab bar back into view
+    func showCustomTabBar(animated: Bool = true) {
+        guard let constraint = customTabBarBottomConstraint else { return }
+        constraint.constant = 0
+        let animations = { self.view.layoutIfNeeded() }
+        
+        if animated {
+            // Slightly slower, crisp spring in
+            UIView.animate(withDuration: 0.40,
+                           delay: 0,
+                           usingSpringWithDamping: 0.78,
+                           initialSpringVelocity: 1.1,
+                           options: [.allowUserInteraction, .beginFromCurrentState]) {
+                animations()
+            }
+        } else {
+            animations()
         }
     }
 }
