@@ -600,4 +600,3 @@ private struct StatBar: View {
         .frame(height: 24)
     }
 }
-

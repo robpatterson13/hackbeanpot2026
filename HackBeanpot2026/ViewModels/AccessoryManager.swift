@@ -15,12 +15,12 @@ class AnimalAccessoryManager {
     
     private var accessoryPositions: [AccessoryType: [AnimalType: AccessoryPosition]] = [
         .fedora: [
-            .blob: AccessoryPosition(xOffset: 0, yOffset: -50),
-            .fish: AccessoryPosition(xOffset: 10, yOffset: -60),
+            .blob: AccessoryPosition(xOffset: 0, yOffset: -52),
+            .fish: AccessoryPosition(xOffset: 5, yOffset: -45),
             .gecko: AccessoryPosition(xOffset: -13, yOffset: -91),
-            .cat: AccessoryPosition(xOffset: 0, yOffset: -50),
-            .dog: AccessoryPosition(xOffset: 0, yOffset: -50),
-            .unicorn: AccessoryPosition(xOffset: 0, yOffset: -60)
+            .cat: AccessoryPosition(xOffset: 10, yOffset: -80),
+            .dog: AccessoryPosition(xOffset: 12, yOffset: -89),
+            .unicorn: AccessoryPosition(xOffset: -13, yOffset: -62)
         ],
         
         .sunglasses: [
