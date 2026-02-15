@@ -29,9 +29,22 @@
 		7CF879282F4008AB003114C4 /* HackBeanpot2026UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HackBeanpot2026UITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		DFD728642F418F2C009F0572 /* Exceptions for "HackBeanpot2026" folder in "HackBeanpot2026" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 7CF879102F4008AA003114C4 /* HackBeanpot2026 */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7CF879132F4008AA003114C4 /* HackBeanpot2026 */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				DFD728642F418F2C009F0572 /* Exceptions for "HackBeanpot2026" folder in "HackBeanpot2026" target */,
+			);
 			path = HackBeanpot2026;
 			sourceTree = "<group>";
 		};
@@ -400,6 +413,7 @@
 				DEVELOPMENT_TEAM = 7H43V6242K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HackBeanpot2026/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to take photos of job application confirmations for verification.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "This app needs access to your health data to verify completion of fitness and sleep habits for your virtual pet.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "This app may update your health data as part of habit tracking.";
@@ -438,6 +452,7 @@
 				DEVELOPMENT_TEAM = 7H43V6242K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HackBeanpot2026/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to take photos of job application confirmations for verification.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "This app needs access to your health data to verify completion of fitness and sleep habits for your virtual pet.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "This app may update your health data as part of habit tracking.";
