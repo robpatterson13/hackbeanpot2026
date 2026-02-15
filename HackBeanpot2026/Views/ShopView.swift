@@ -45,6 +45,7 @@ final class ShopViewModel: ObservableObject {
 struct ShopView: View {
     @StateObject private var viewModel: ShopViewModel
     @State private var errorMessage: String? = nil
+    @State private var selectedItem: ShopItem? = nil
     
     init(animalManager: AnimalManager) {
         _viewModel = StateObject(wrappedValue: ShopViewModel(animalManager: animalManager))
@@ -61,17 +62,17 @@ struct ShopView: View {
                 // Shelves rows overlay across the whole screen
                 GeometryReader { proxy in
                     // Adjust these to align rows with the planks in your shelves image
-                    let topInset: CGFloat = 40
-                    let bottomInset: CGFloat = 70
+                    let topInset: CGFloat = 50
+                    let bottomInset: CGFloat = 90
                     let interShelfSpacing: CGFloat = 8
                     let available = proxy.size.height - topInset - bottomInset - interShelfSpacing * 3
-                    let shelfHeight = max(44, available / 4)
+                    let shelfHeight = max(36, available / 4)
 
                     VStack(spacing: interShelfSpacing) {
-                        shelfRow(items: viewModel.allItems.filter { $0.category == .upgrades }, shelfHeight: shelfHeight)
-                        shelfRow(items: viewModel.allItems.filter { $0.category == .food }, shelfHeight: shelfHeight)
-                        shelfRow(items: viewModel.allItems.filter { $0.category == .accessories }, shelfHeight: shelfHeight)
-                        shelfRow(items: viewModel.allItems.filter { $0.category == .backgrounds }, shelfHeight: shelfHeight)
+                        shelfRow(category: .upgrades, items: viewModel.allItems.filter { $0.category == .upgrades }, shelfHeight: shelfHeight)
+                        shelfRow(category: .accessories, items: viewModel.allItems.filter { $0.category == .accessories }, shelfHeight: shelfHeight)
+                        shelfRow(category: .food, items: viewModel.allItems.filter { $0.category == .food }, shelfHeight: shelfHeight)
+                        shelfRow(category: .backgrounds, items: viewModel.allItems.filter { $0.category == .backgrounds }, shelfHeight: shelfHeight)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     .padding(.top, topInset)
@@ -99,36 +100,108 @@ struct ShopView: View {
         }, message: {
             Text(errorMessage ?? "")
         })
+        .sheet(isPresented: Binding(get: { selectedItem != nil }, set: { if !$0 { selectedItem = nil } })) {
+            if let item = selectedItem {
+                ShopItemDetailSheet(item: item,
+                                    canBuy: viewModel.canBuy(item),
+                                    onBuy: {
+                                        do {
+                                            try viewModel.buy(item)
+                                        } catch AnimalManager.PurchaseError.insufficientFunds {
+                                            errorMessage = "Not enough coins."
+                                        } catch AnimalManager.PurchaseError.invalidUpgrade {
+                                            errorMessage = "This upgrade isn't unlocked yet."
+                                        } catch {
+                                            errorMessage = "Couldn't complete purchase."
+                                        }
+                                    },
+                                    onClose: { selectedItem = nil })
+            }
+        }
     }
     
     @ViewBuilder
-    private func shelfRow(items: [ShopItem], shelfHeight: CGFloat) -> some View {
-        // Horizontal items scroller over the shelves background
+    private func shelfRow(category: ShopCategory, items: [ShopItem], shelfHeight: CGFloat) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 ForEach(Array(items.enumerated()), id: \.offset) { _, item in
-                    let cardWidth = max(100, min(140, shelfHeight * 1.3))
-                    ShopItemCard(item: item,
-                                 canBuy: viewModel.canBuy(item),
-                                 onBuy: {
-                                     do {
-                                         try viewModel.buy(item)
-                                     } catch AnimalManager.PurchaseError.insufficientFunds {
-                                         errorMessage = "Not enough coins."
-                                     } catch AnimalManager.PurchaseError.invalidUpgrade {
-                                         errorMessage = "This upgrade isn't unlocked yet."
-                                     } catch {
-                                         errorMessage = "Couldn't complete purchase."
-                                     }
-                                 },
-                                 compact: true)
-                    .frame(width: cardWidth, height: shelfHeight)
+                    let sizing = tileSizing(for: category)
+                    let base = shelfHeight * sizing.scale
+                    let tileSize = max(sizing.min, min(sizing.max, base))
+                    Button {
+                        selectedItem = item
+                    } label: {
+                        thumbnailSquare(for: item, size: tileSize)
+                            .frame(width: tileSize, height: tileSize)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
         }
         .frame(height: shelfHeight)
+    }
+    
+    private func tileSizing(for category: ShopCategory) -> (scale: CGFloat, min: CGFloat, max: CGFloat) {
+        // Adjust these values to tune each category's thumbnail size
+        switch category {
+        case .upgrades:
+            // Pets slightly larger
+            return (scale: 0.70, min: 68, max: 112)
+        case .accessories:
+            return (scale: 0.60, min: 56, max: 96)
+        case .food:
+            return (scale: 0.55, min: 52, max: 92)
+        case .backgrounds:
+            // Backgrounds slightly smaller
+            return (scale: 0.50, min: 44, max: 84)
+        }
+    }
+    
+    @ViewBuilder
+    private func thumbnailSquare(for item: ShopItem, size: CGFloat) -> some View {
+        ZStack {
+            if case .background = item, let name = shopAssetName(for: item) {
+                Image(name)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: size, height: size)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+            } else if let name = shopAssetName(for: item) {
+                Image(name)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: size * 0.9, height: size * 0.9)
+            } else {
+                Image(systemName: item.iconSystemName ?? "bag")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: size * 0.8, height: size * 0.8)
+                    .foregroundColor(.accentColor)
+            }
+        }
+    }
+}
+
+fileprivate func shopAssetName(for item: ShopItem) -> String? {
+    switch item {
+    case .steak: return "steak"
+    case .fedora: return "fedora"
+    case .sunglasses: return "sunglasses"
+    case .tie: return "tie"
+    case .bowtie: return "bowtie"
+    case .potion: return "potion"
+    case .pills: return "pills"
+    case .background(let type): return type.imageName
+    case .upgrade(let upgrade):
+        switch upgrade {
+        case .fish: return "fish_state_1"
+        case .gecko: return "gecko_state_1"
+        case .cat: return "cat_state_1"
+        case .dog: return "dog_state_1"
+        case .unicorn: return "unicorn_state_1"
+        }
     }
 }
 
@@ -191,11 +264,44 @@ struct ShopItemCard: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .padding(compact ? 8 : 16)
         default:
-            Image(systemName: item.iconSystemName ?? "bag")
-                .resizable()
-                .scaledToFit()
-                .foregroundColor(.accentColor)
-                .padding(compact ? 8 : 16)
+            if let assetName = shopAssetName(for: item) {
+                Image(assetName)
+                    .resizable()
+                    .scaledToFit()
+                    .padding(compact ? 8 : 16)
+            } else {
+                Image(systemName: item.iconSystemName ?? "bag")
+                    .resizable()
+                    .scaledToFit()
+                    .foregroundColor(.accentColor)
+                    .padding(compact ? 8 : 16)
+            }
+        }
+    }
+}
+
+struct ShopItemDetailSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let item: ShopItem
+    let canBuy: Bool
+    let onBuy: () -> Void
+    let onClose: () -> Void
+
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                ShopItemCard(item: item, canBuy: canBuy, onBuy: onBuy)
+                    .padding()
+            }
+            .navigationTitle(item.displayName)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") {
+                        onClose()
+                        dismiss()
+                    }
+                }
+            }
         }
     }
 }
