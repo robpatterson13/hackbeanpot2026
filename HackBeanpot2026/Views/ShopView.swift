@@ -283,7 +283,7 @@ struct ShopItemCard: View {
                 Image("coin")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 16, height: 16)
+                    .frame(width: 28, height: 28)
                 Text("\(item.cost)")
                 Spacer()
                 Button("Buy", action: onBuy)
