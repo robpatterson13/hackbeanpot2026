@@ -30,7 +30,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		DFD728642F418F2C009F0572 /* Exceptions for "HackBeanpot2026" folder in "HackBeanpot2026" target */ = {
+		71BFBCA92F418D69007F8AE8 /* Exceptions for "HackBeanpot2026" folder in "HackBeanpot2026" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -43,7 +43,7 @@
 		7CF879132F4008AA003114C4 /* HackBeanpot2026 */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				DFD728642F418F2C009F0572 /* Exceptions for "HackBeanpot2026" folder in "HackBeanpot2026" target */,
+				71BFBCA92F418D69007F8AE8 /* Exceptions for "HackBeanpot2026" folder in "HackBeanpot2026" target */,
 			);
 			path = HackBeanpot2026;
 			sourceTree = "<group>";

@@ -5,119 +5,112 @@ struct ObjectivesAndTasksView: View {
     @State var animalManager: AnimalManager
     @State private var selectedCompleted: CompletedTask? = nil
     
+    
     var body: some View {
         NavigationView {
-            List {
-                // Daily Objective
-                Section("Daily Objective") {
-                    if let objective = animalManager.objectivesManager.currentObjective {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack(spacing: 8) {
-                                Text(objectiveTitle(objective.type))
-                                    .font(.headline)
-                                if objectiveIsComplete(objective) {
-                                    Image(systemName: "checkmark.seal.fill")
-                                        .foregroundColor(.green)
-                                }
-                            }
-                            
-                            HStack {
-                                let progress = progressForObjective(objective)
-                                ProgressView(value: progress.current, total: progress.total)
-                                    .progressViewStyle(.linear)
-                                Text("\(Int(progress.current))/\(Int(progress.total))")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            
-                            if objectiveIsComplete(objective) {
-                                Button("Claim") {
-                                    animalManager.objectivesManager.completeObjective()
-                                    animalManager.objectivesManager.currentObjective = createNewObjective()
-                                }
-                                .buttonStyle(.borderedProminent)
-                            }
-                        }
-                        .padding(.vertical, 4)
-                    } else {
-                        Button("Get Today’s Objective") {
-                            animalManager.objectivesManager.assignInitialObjective()
-                        }
-                    }
+            ZStack {
+                ScrollView {
+                    Image("task_list")
+                        .resizable()
+                        .scaledToFill()
+                        .ignoresSafeArea()
                 }
+                .scrollDisabled(false)
+                .ignoresSafeArea()
                 
-                // Completed Objectives
-                if !animalManager.objectivesManager.completedObjectives.isEmpty {
-                    Section("Completed Objectives") {
-                        ForEach(Array(animalManager.objectivesManager.completedObjectives.enumerated()), id: \.offset) { _, completed in
-                            HStack {
-                                Image(systemName: "checkmark.seal.fill")
-                                    .foregroundColor(.green)
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(objectiveTitle(completed.type))
-                                        .font(.body)
-                                    Text(completed.date, style: .date)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
+                VStack(spacing: 24) {
+                    Color.clear.frame(height: 200)
+                    
+                    VStack(alignment: .leading, spacing: 12) {
+                        if let objective = animalManager.objectivesManager.currentObjective {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack(spacing: 8) {
+                                    Text(objectiveTitle(objective.type))
+                                        .padding(.bottom, 8)
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .font(.h2)
                                 }
-                                Spacer()
-                            }
-                            .padding(.vertical, 4)
-                        }
-                    }
-                }
-                
-                // Active tasks
-                if !animalManager.taskManager.tasks.isEmpty {
-                    Section("Active Tasks") {
-                        ForEach(animalManager.taskManager.tasks) { task in
-                            TaskView(task: task) {
-                                animalManager.taskManager.complete(task)
-                            }
-                        }
-                    }
-                }
-                
-                // Completed tasks
-                if !animalManager.taskManager.completedTasks.isEmpty {
-                    Section("Completed Tasks") {
-                        ForEach(animalManager.taskManager.completedTasks) { completed in
-                            HStack(spacing: 16) {
-                                Image(systemName: completed.habit.imageName)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 28, height: 28)
-                                    .foregroundColor(.secondary)
                                 
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(completed.habit.displayName)
-                                        .font(.body)
-                                    Text(completed.completedAt, style: .date)
+                                HStack {
+                                    let progress = progressForObjective(objective)
+                                    ProgressView(value: progress.current, total: progress.total)
+                                        .progressViewStyle(.linear)
+                                    Text("\(Int(progress.current))/\(Int(progress.total))")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 }
-                                Spacer()
-                                Image(systemName: "checkmark.seal.fill")
-                                    .foregroundColor(.green)
                             }
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                selectedCompleted = completed
+                            .padding(.horizontal, 16)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                        } else {
+                            Button("get today’s objective") {
+                                animalManager.objectivesManager.assignInitialObjective()
                             }
+                            .font(.h3)
+                            .padding()
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                     }
+                    .padding(.horizontal, 48)
+                    
+                    Color.clear.frame(height: 12)
+                    
+                    ScrollView {
+                        if !animalManager.taskManager.tasks.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                ForEach(animalManager.taskManager.tasks) { task in
+                                    TaskView(task: task) {
+                                        animalManager.taskManager.complete(task)
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 48)
+                            .padding(.vertical, 24)
+                        }
+                        
+                        // Completed tasks
+                        if !animalManager.taskManager.completedTasks.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                ForEach(animalManager.taskManager.completedTasks) { completed in
+                                    HStack(spacing: 16) {
+                                        Image(systemName: completed.habit.imageName)
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                            .frame(width: 28, height: 28)
+                                            .foregroundColor(.secondary)
+                                        
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(completed.habit.displayName)
+                                                .font(.body)
+                                            Text(completed.completedAt, style: .date)
+                                                .font(.body)
+                                                .foregroundColor(.secondary)
+                                        }
+                                        Spacer()
+                                        Image(systemName: "checkmark.seal.fill")
+                                            .foregroundColor(.green)
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .onTapGesture {
+                                        selectedCompleted = completed
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 48)
+                        }
+                    }
+                    .overlay {
+                        if animalManager.taskManager.tasks.isEmpty && animalManager.taskManager.completedTasks.isEmpty && animalManager.objectivesManager.currentObjective == nil {
+                            ContentUnavailableView("no tasks right now",
+                                                   systemImage: "sun.max",
+                                                   description: Text("check back later — tasks and objectives appear throughout the day"))
+                        }
+                    }
+                    .sheet(item: $selectedCompleted) { completed in
+                        CompletedDetailView(completed: completed)
+                    }
                 }
-            }
-            .navigationTitle("Today")
-            .overlay {
-                if animalManager.taskManager.tasks.isEmpty && animalManager.taskManager.completedTasks.isEmpty && animalManager.objectivesManager.currentObjective == nil {
-                    ContentUnavailableView("No Tasks Right Now",
-                                           systemImage: "sun.max",
-                                           description: Text("Check back later — tasks and objectives appear throughout the day."))
-                }
-            }
-            .sheet(item: $selectedCompleted) { completed in
-                CompletedDetailView(completed: completed)
             }
         }
     }
@@ -153,9 +146,9 @@ struct ObjectivesAndTasksView: View {
 
 private func objectiveTitle(_ type: DailyObjectiveType) -> String {
     switch type {
-    case .finishTwoTasksToday: return "Finish two tasks today"
-    case .feedPet:             return "Feed your pet today"
-    case .makePetHappy:        return "Make your pet happy today"
+    case .finishTwoTasksToday: return "finish two tasks today"
+    case .feedPet:             return "feed your pet today"
+    case .makePetHappy:        return "make your pet happy today"
     }
 }
 

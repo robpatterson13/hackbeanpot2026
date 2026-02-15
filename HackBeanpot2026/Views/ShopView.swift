@@ -96,13 +96,13 @@ struct ShopView: View {
                                 .scaledToFit()
                                 .frame(width: 35, height: 35)
                             Text("\(viewModel.coins)")
-                                .font(.body)
+                                .font(.h3)
                         }
                         .padding(8)
                         .background(.thinMaterial, in: Capsule())
                     }
                     .padding(.horizontal)
-                    .padding(.top, 20)
+                    .padding(.top, 40)
                     Spacer()
                 }
             }
@@ -290,7 +290,7 @@ struct ShopItemCard: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: compact ? 6 : 10) {
+        VStack(alignment: .leading, spacing: compact ? 6 : 12) {
             // Image / Icon
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
@@ -303,9 +303,9 @@ struct ShopItemCard: View {
             
             // Title and price
             Text(item.displayName)
-                .font(compact ? .caption : .headline)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
+                .font(.h2)
             
             HStack {
                 Image("coin")
@@ -313,24 +313,25 @@ struct ShopItemCard: View {
                     .scaledToFit()
                     .frame(width: 28, height: 28)
                 Text("\(item.cost)")
+                    .font(.h3)
                 Spacer()
                 
                 if isOwned {
-                    Text("Owned")
-                        .font(compact ? .caption2 : .subheadline)
+                    Text("owned")
+                        .font(.body)
                         .foregroundColor(.secondary)
                         .padding(.horizontal, compact ? 8 : 12)
                         .padding(.vertical, compact ? 4 : 8)
                         .background(Color(.secondarySystemBackground))
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                 } else {
-                    Button("Buy", action: onBuy)
+                    Button("buy", action: onBuy)
+                        .font(.body)
                         .buttonStyle(.borderedProminent)
                         .controlSize(compact ? .small : .regular)
                         .disabled(!canBuy)
                 }
             }
-            .font(compact ? .caption2 : .subheadline)
         }
         .padding(compact ? 6 : 12)
         .background(
@@ -391,13 +392,13 @@ struct ShopItemDetailSheet: View {
                         .padding()
                 }
             }
-            .navigationTitle(item.displayName)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") {
+                    Button("close") {
                         onClose()
                         dismiss()
                     }
+                    .font(.h3)
                 }
             }
         }
