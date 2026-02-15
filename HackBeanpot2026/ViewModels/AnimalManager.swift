@@ -205,6 +205,16 @@ final class AnimalManager {
         default:
             return true
         }
+        
+        if hasPurchased(item) {
+            return false
+        }
+        
+        if case .upgrade(let upgrade) = item {
+            return upgrade.isUnlocked(animal.type)
+        }
+        
+        return true
     }
 
     func buy(_ item: ShopItem) throws(PurchaseError) {
@@ -363,10 +373,14 @@ final class AnimalManager {
         saveState()
     }
     
-    /// Clears inventory items (for testing or reset purposes) 
+    /// Clears inventory items (for testing or reset purposes)
     func clearInventory() {
         inventoryManager.clearInventory()
         saveState()
+    }
+    
+    func hasPurchased(_ item: ShopItem) -> Bool {
+        return purchaseHistory.contains { $0.item == item }
     }
     
     // MARK: - Developer Mode Reset Functions

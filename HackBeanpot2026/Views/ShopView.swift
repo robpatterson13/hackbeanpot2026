@@ -63,12 +63,11 @@ struct ShopView: View {
                 .ignoresSafeArea()
             
             ZStack {
-                // Shelves rows overlay across the whole screen
+                // vars for placing items on shelves
                 GeometryReader { proxy in
-                    // Adjust these to align rows with the planks in your shelves image
-                    let topInset: CGFloat = 50
-                    let bottomInset: CGFloat = 95
-                    let interShelfSpacing: CGFloat = 8
+                    let topInset: CGFloat = 85
+                    let bottomInset: CGFloat = 150
+                    let interShelfSpacing: CGFloat = 14
                     let available = proxy.size.height - topInset - bottomInset - interShelfSpacing * 3
                     let shelfHeight = max(36, available / 4)
 
@@ -95,20 +94,19 @@ struct ShopView: View {
                             Image("coin") // replace with your asset name if different
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 30, height: 30)
-                            Text("Coins: \(viewModel.coins)")
-                                .font(.headline)
+                                .frame(width: 35, height: 35)
+                            Text("\(viewModel.coins)")
+                                .font(.body)
                         }
                         .padding(8)
-                        .background(.ultraThinMaterial, in: Capsule())
+                        .background(.thinMaterial, in: Capsule())
                     }
                     .padding(.horizontal)
-                    .padding(.top, 8)
+                    .padding(.top, 20)
                     Spacer()
                 }
             }
         }
-        .navigationTitle("Shop")
         .alert("Purchase Failed", isPresented: .constant(errorMessage != nil), actions: {
             Button("OK") { errorMessage = nil }
         }, message: {
@@ -198,9 +196,9 @@ struct ShopView: View {
         case .upgrades:
             return -shelfHeight * 0.15 // move pets up a bit more
         case .accessories:
-            return -shelfHeight * 0.08 // middle rows up slightly
+            return shelfHeight * -0.03 // nudge accessories slightly down (higher than before)
         case .food:
-            return -shelfHeight * 0.08 // middle rows up slightly
+            return shelfHeight * 0.04 // move food down a bit more
         case .backgrounds:
             return 0 // align backgrounds with others
         }
